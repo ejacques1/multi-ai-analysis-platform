@@ -987,6 +987,9 @@
 
             <button class="btn" onclick="saveCodingScheme()">Save Coding Scheme</button>
             <button class="btn btn-secondary" onclick="loadCodingSchemes()">Load Saved Schemes</button>
+            <div id="save-status" style="margin-top: 1rem; font-size: 0.9rem; color: #28a745;">
+                <!-- Save status will appear here -->
+            </div>
         </div>
 
         <!-- Upload Tab -->
@@ -1289,11 +1292,16 @@
 
         async function loadUserData() {
             console.log('Loading user data...')
-            await Promise.all([
-                loadCodingSchemes(),
-                loadUploadedArticles(),
+            try {
+                // Load data sequentially to ensure proper order
+                await loadCodingSchemes()
+                await loadUploadedArticles()
                 renderResultsTable()
-            ])
+                console.log('User data loaded successfully')
+            } catch (error) {
+                console.error('Error loading user data:', error)
+                showAlert('Some data could not be loaded. Please refresh the page.', 'warning')
+            }
         }
 
         // Utility functions
@@ -1480,6 +1488,9 @@
             document.getElementById('code-name').value = ''
             document.getElementById('code-definition').value = ''
             
+            // Mark as unsaved
+            updateSaveStatus(false)
+            
             showAlert(`Code "${name}" added successfully!`, 'success')
         }
 
@@ -1493,6 +1504,10 @@
                 
                 renderCodes()
                 renderResultsTable()
+                
+                // Mark as unsaved
+                updateSaveStatus(false)
+                
                 showAlert(`Code "${codeName}" removed successfully!`, 'success')
             }
         }
@@ -1536,23 +1551,46 @@
             }
 
             try {
-                const { data, error } = await supabase
-                    .from('coding_schemes')
-                    .insert({
-                        user_id: currentUser.id,
-                        name: schemeName,
-                        codes: currentCodes.map(code => ({
-                            name: code.name,
-                            definition: code.definition
-                        }))
-                    })
-                    .select()
-                    .single()
+                const codesData = currentCodes.map(code => ({
+                    name: code.name,
+                    definition: code.definition
+                }))
 
-                if (error) throw error
+                let result
+                if (currentSchemeId) {
+                    // Update existing scheme
+                    result = await supabase
+                        .from('coding_schemes')
+                        .update({
+                            name: schemeName,
+                            codes: codesData,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', currentSchemeId)
+                        .eq('user_id', currentUser.id)
+                        .select()
+                        .single()
+                } else {
+                    // Create new scheme
+                    result = await supabase
+                        .from('coding_schemes')
+                        .insert({
+                            user_id: currentUser.id,
+                            name: schemeName,
+                            codes: codesData
+                        })
+                        .select()
+                        .single()
+                }
 
-                currentSchemeId = data.id
-                showAlert('Coding scheme saved to your account!', 'success')
+                if (result.error) throw result.error
+
+                currentSchemeId = result.data.id
+                showAlert(`Coding scheme "${schemeName}" saved successfully!`, 'success')
+                
+                // Update the save indicator
+                updateSaveStatus(true)
+                
             } catch (error) {
                 console.error('Error saving coding scheme:', error)
                 showAlert(`Failed to save coding scheme: ${error.message}`, 'error')
@@ -1566,13 +1604,18 @@
             }
             
             try {
+                console.log('Loading coding schemes for user:', currentUser.id)
+                
                 const { data, error } = await supabase
                     .from('coding_schemes')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false })
 
-                if (error) throw error
+                if (error) {
+                    console.error('Error loading coding schemes:', error)
+                    throw error
+                }
 
                 if (data && data.length > 0) {
                     // Load the most recent scheme
@@ -1588,12 +1631,32 @@
                     }))
                     
                     renderCodes()
-                    renderResultsTable()
+                    console.log('Loaded coding scheme:', latestScheme.name, 'with', currentCodes.length, 'codes')
                     
-                    console.log('Loaded coding scheme:', latestScheme.name)
+                    // Show success message
+                    showAlert(`Loaded coding scheme: "${latestScheme.name}" with ${currentCodes.length} codes`, 'success')
+                } else {
+                    console.log('No saved coding schemes found')
+                    // Clear any existing codes
+                    currentCodes = []
+                    currentSchemeId = null
+                    document.getElementById('scheme-name').value = ''
+                    renderCodes()
                 }
+                
+                // Always re-render the results table after loading codes
+                renderResultsTable()
+                
             } catch (error) {
                 console.error('Error loading coding schemes:', error)
+                showAlert('Could not load saved coding schemes. You can create new ones.', 'warning')
+                
+                // Initialize empty state
+                currentCodes = []
+                currentSchemeId = null
+                document.getElementById('scheme-name').value = ''
+                renderCodes()
+                renderResultsTable()
             }
         }
 
@@ -2235,6 +2298,20 @@
 
         async function generateCodeSummary(codeName) {
             showAlert(`Summary for "${codeName}" coming soon!`, 'info')
+        }
+
+        // Utility function to update save status indicator
+        function updateSaveStatus(isSaved) {
+            const statusElement = document.getElementById('save-status')
+            if (statusElement) {
+                if (isSaved) {
+                    statusElement.innerHTML = '✓ All changes saved'
+                    statusElement.style.color = '#28a745'
+                } else {
+                    statusElement.innerHTML = '● Unsaved changes'
+                    statusElement.style.color = '#ffc107'
+                }
+            }
         }
 
         // Alert system
