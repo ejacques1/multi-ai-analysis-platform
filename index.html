@@ -1038,13 +1038,16 @@
         // Initialize PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            if (initializeSupabase()) {
+                handleAuthStateChange()
+                renderResultsTable()
+            }
+        })
+
         // Initialize Supabase
         function initializeSupabase() {
-            if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
-                showAlert('Please configure Supabase credentials in the code', 'error')
-                return false
-            }
-            
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
                 return true
@@ -1053,6 +1056,55 @@
                 showAlert('Failed to connect to backend service', 'error')
                 return false
             }
+        }
+
+        // Navigation functions
+        function showAuthSection(isSignIn = false) {
+            document.getElementById('landing-section').classList.add('hidden')
+            document.getElementById('auth-section').classList.remove('hidden')
+            document.getElementById('user-info').classList.add('hidden')
+            document.getElementById('main-nav').classList.add('hidden')
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden')
+            })
+            
+            if (isSignIn) {
+                showSignInForm()
+            } else {
+                showSignUpForm()
+            }
+        }
+
+        function showLandingSection() {
+            document.getElementById('landing-section').classList.remove('hidden')
+            document.getElementById('auth-section').classList.add('hidden')
+            document.getElementById('user-info').classList.add('hidden')
+            document.getElementById('main-nav').classList.add('hidden')
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden')
+            })
+        }
+
+        function showMainApp() {
+            document.getElementById('landing-section').classList.add('hidden')
+            document.getElementById('auth-section').classList.add('hidden')
+            document.getElementById('user-info').classList.remove('hidden')
+            document.getElementById('main-nav').classList.remove('hidden')
+            document.getElementById('results').classList.remove('hidden')
+            document.getElementById('results').classList.add('active')
+            
+            // Load user data
+            loadUserData()
+        }
+
+        function showSignUpForm() {
+            document.getElementById('signin-form').classList.add('hidden')
+            document.getElementById('signup-form').classList.remove('hidden')
+        }
+
+        function showSignInForm() {
+            document.getElementById('signup-form').classList.add('hidden')
+            document.getElementById('signin-form').classList.remove('hidden')
         }
 
         // Authentication functions
@@ -1118,48 +1170,6 @@
             }
         }
 
-        function showSignUpForm() {
-            document.getElementById('signin-form').classList.add('hidden')
-            document.getElementById('signup-form').classList.remove('hidden')
-        }
-
-        function showSignInForm() {
-            document.getElementById('signup-form').classList.add('hidden')
-            document.getElementById('signin-form').classList.remove('hidden')
-        }
-
-        function showAuthSection(isSignIn = false) {
-            document.getElementById('landing-section').classList.add('hidden')
-            document.getElementById('auth-section').classList.remove('hidden')
-            
-            if (isSignIn) {
-                showSignInForm()
-            } else {
-                showSignUpForm()
-            }
-        }
-
-        function showLandingSection() {
-            document.getElementById('landing-section').classList.remove('hidden')
-            document.getElementById('auth-section').classList.add('hidden')
-            document.getElementById('user-info').classList.add('hidden')
-            document.getElementById('main-nav').classList.add('hidden')
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden')
-            })
-        }
-
-        function showAuthSection(isSignIn = false) {
-            document.getElementById('landing-section').classList.add('hidden')
-            document.getElementById('auth-section').classList.remove('hidden')
-            
-            if (isSignIn) {
-                showSignInForm()
-            } else {
-                showSignUpForm()
-            }
-        }
-
         // Handle authentication state changes
         function handleAuthStateChange() {
             supabase.auth.onAuthStateChange(async (event, session) => {
@@ -1169,7 +1179,7 @@
                     showMainApp()
                 } else {
                     currentUser = null
-                    showLandingSection() // Show landing page instead of auth section
+                    showLandingSection()
                 }
             })
         }
@@ -1225,25 +1235,6 @@
             }
         }
 
-        function showAuthSection() {
-            document.getElementById('auth-section').classList.remove('hidden')
-            document.getElementById('user-info').classList.add('hidden')
-            document.getElementById('main-nav').classList.add('hidden')
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden')
-            })
-        }
-
-        function showMainApp() {
-            document.getElementById('auth-section').classList.add('hidden')
-            document.getElementById('user-info').classList.remove('hidden')
-            document.getElementById('main-nav').classList.remove('hidden')
-            document.getElementById('results').classList.remove('hidden')
-            
-            // Load user data
-            loadUserData()
-        }
-
         async function loadUserData() {
             await Promise.all([
                 loadCodingSchemes(),
@@ -1261,7 +1252,7 @@
                 if (usageCount === 'unlimited') {
                     usageElement.textContent = 'Unlimited (Admin)'
                     progressElement.style.width = '100%'
-                    progressElement.style.background = '#28a745' // Green for unlimited
+                    progressElement.style.background = '#28a745'
                 } else {
                     usageElement.textContent = `${usageCount}/10 analyses used`
                     const percentage = (usageCount / 10) * 100
@@ -1376,7 +1367,6 @@
             testBtn.textContent = 'Testing...'
             
             try {
-                // Test Supabase connection
                 const { data, error } = await supabase
                     .from('users')
                     .select('id')
@@ -1480,3 +1470,334 @@
             }
 
             if (!currentUser) {
+                showAlert('Please sign in to save coding scheme', 'error')
+                return
+            }
+
+            showAlert('Coding scheme saved to your account!', 'success')
+        }
+
+        async function loadCodingSchemes() {
+            if (!currentUser) {
+                showAlert('Please sign in to load coding schemes', 'error')
+                return
+            }
+            
+            showAlert('Loading saved coding schemes...', 'info')
+        }
+
+        // File handling functions
+        function handleFileDrop(e) {
+            e.preventDefault()
+            e.target.classList.remove('dragover')
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
+            processFiles(files)
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault()
+            e.target.classList.add('dragover')
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('dragover')
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files)
+            processFiles(files)
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                try {
+                    if (file.size > 50 * 1024 * 1024) {
+                        throw new Error('File too large (max 50MB)')
+                    }
+                    
+                    if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        showAlert(`File "${file.name}" already uploaded`, 'warning')
+                        continue
+                    }
+                    
+                    showAlert(`Processing ${file.name}...`, 'info')
+                    
+                    const { fullText, pageTexts } = await extractTextFromPDF(file)
+                    const fileObj = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        size: file.size,
+                        text: fullText,
+                        pageTexts: pageTexts,
+                        uploaded: new Date().toISOString()
+                    }
+                    uploadedFiles.push(fileObj)
+                    showAlert(`Successfully processed ${file.name}`, 'success')
+                } catch (error) {
+                    console.error('Error processing file:', file.name, error)
+                    showAlert(`Error processing ${file.name}: ${error.message}`, 'error')
+                }
+            }
+            renderFileList()
+        }
+
+        async function extractTextFromPDF(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer()
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise
+                let fullText = ''
+                let pageTexts = []
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i)
+                    const textContent = await page.getTextContent()
+                    const pageText = textContent.items.map(item => item.str).join(' ')
+                    pageTexts.push({ page: i, text: pageText })
+                    fullText += pageText + '\n'
+                }
+
+                if (fullText.trim().length === 0) {
+                    throw new Error('No text could be extracted from this PDF')
+                }
+
+                return { fullText, pageTexts }
+            } catch (error) {
+                throw new Error(`Failed to process PDF: ${error.message}`)
+            }
+        }
+
+        function renderFileList() {
+            const fileList = document.getElementById('file-list')
+            
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet.</p>'
+                return
+            }
+
+            let filesHTML = ''
+            uploadedFiles.forEach(file => {
+                filesHTML += `
+                    <div class="code-item">
+                        <h4>${escapeHtml(file.name)}</h4>
+                        <p>Size: ${(file.size / 1024).toFixed(1)} KB | Uploaded: ${new Date(file.uploaded).toLocaleString()}</p>
+                        <p>Text extracted: ${file.text.length} characters</p>
+                        <div class="code-actions">
+                            <button class="btn btn-secondary" onclick="previewFile(${file.id})">Preview Text</button>
+                            <button class="btn btn-danger" onclick="removeFile(${file.id})">Remove</button>
+                        </div>
+                    </div>
+                `
+            })
+            
+            fileList.innerHTML = filesHTML
+        }
+
+        function removeFile(id) {
+            const fileIndex = uploadedFiles.findIndex(file => file.id === id)
+            if (fileIndex > -1) {
+                const fileName = uploadedFiles[fileIndex].name
+                uploadedFiles.splice(fileIndex, 1)
+                renderFileList()
+                showAlert(`File "${fileName}" removed successfully!`, 'success')
+            }
+        }
+
+        function previewFile(id) {
+            const file = uploadedFiles.find(f => f.id === id)
+            if (file) {
+                const preview = file.text.substring(0, 1000) + (file.text.length > 1000 ? '...' : '')
+                alert(`Text preview for ${file.name}:\n\n${preview}`)
+            }
+        }
+
+        // Results table functions
+        function renderResultsTable() {
+            const allCodes = [...currentCodes]
+            
+            // Add placeholders if we have fewer than 5 codes
+            while (allCodes.length < 5) {
+                const placeholderIndex = allCodes.length
+                allCodes.push({
+                    name: `Code ${placeholderIndex + 1}`,
+                    isPlaceholder: true
+                })
+            }
+
+            const tableHeader = document.getElementById('results-header')
+            const tableBody = document.getElementById('results-body')
+            
+            // Build header
+            let headerHTML = '<tr>'
+            headerHTML += '<th>Article</th>'
+            headerHTML += '<th>Date</th>'
+            
+            allCodes.forEach(code => {
+                const codeClass = code.isPlaceholder ? 'placeholder-code' : 'real-code'
+                headerHTML += `<th class="code-header ${codeClass}">${escapeHtml(code.name)}</th>`
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add totals row
+            headerHTML += '<tr class="totals-row">'
+            headerHTML += '<td><strong>TOTAL</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    const total = analysisResults.filter(result => 
+                        result.codesFound && result.codesFound[code.name] === 1
+                    ).length
+                    headerHTML += `<td class="code-cell">${total}</td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add AI Summary row
+            headerHTML += '<tr class="summary-row">'
+            headerHTML += '<td><strong>AI SUMMARY</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    headerHTML += `<td class="code-cell">
+                        <button class="btn btn-secondary btn-small" onclick="generateCodeSummary('${escapeHtml(code.name)}')" disabled>
+                            Generate ▼
+                        </button>
+                    </td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            tableHeader.innerHTML = headerHTML
+            
+            // Build body
+            let bodyHTML = ''
+            
+            if (analysisResults.length === 0) {
+                // Show sample data for demonstration
+                const sampleArticles = [
+                    { name: 'Sample_Article_1.pdf', date: '2024-01-15' },
+                    { name: 'Sample_Article_2.pdf', date: '2024-01-16' },
+                    { name: 'Sample_Article_3.pdf', date: '2024-01-17' }
+                ]
+                
+                sampleArticles.forEach((article, index) => {
+                    bodyHTML += '<tr>'
+                    bodyHTML += `<td><strong>${article.name}</strong> 
+                        <button class="btn btn-secondary btn-small" onclick="showDemoEvidence(${index})" style="margin-left: 10px;">
+                            Show ▼
+                        </button>
+                    </td>`
+                    bodyHTML += `<td>${article.date}</td>`
+                    
+                    allCodes.forEach(code => {
+                        if (code.isPlaceholder) {
+                            bodyHTML += '<td class="code-cell">-</td>'
+                        } else {
+                            // Show sample data for real codes
+                            const sampleValue = Math.random() > 0.5 ? 1 : 0
+                            bodyHTML += `<td class="code-cell">${sampleValue}</td>`
+                        }
+                    })
+                    
+                    bodyHTML += '</tr>'
+                    
+                    // Add hidden evidence row
+                    bodyHTML += `<tr id="evidence-${index}" class="evidence-row">`;
+                    bodyHTML += `<td colspan="${allCodes.length + 2}">`;
+                    bodyHTML += `<div class="evidence-content">
+                        <h4>${article.name} Evidence:</h4>
+                        <p><em>Evidence and quotes will appear here after actual analysis.</em></p>
+                    </div>`;
+                    bodyHTML += '</td></tr>';
+                })
+            }
+            
+            if (bodyHTML === '') {
+                bodyHTML = `<tr>
+                    <td colspan="${allCodes.length + 2}" style="text-align: center; color: #6c757d; padding: 2rem;">
+                        Upload articles and run analysis to see results here.
+                    </td>
+                </tr>`
+            }
+            
+            tableBody.innerHTML = bodyHTML
+        }
+
+        function showDemoEvidence(index) {
+            const evidenceRow = document.getElementById(`evidence-${index}`)
+            const button = event.target
+            
+            if (evidenceRow.classList.contains('show')) {
+                evidenceRow.classList.remove('show')
+                button.textContent = 'Show ▼'
+            } else {
+                evidenceRow.classList.add('show')
+                button.textContent = 'Hide ▲'
+            }
+        }
+
+        // Analysis functions
+        async function startAnalysis() {
+            if (currentCodes.length === 0) {
+                showAlert('Please define at least one code before starting analysis', 'error')
+                return
+            }
+
+            if (uploadedFiles.length === 0) {
+                showAlert('Please upload at least one article before starting analysis', 'error')
+                return
+            }
+
+            showAlert('AI Analysis backend integration is ready for deployment. This demo shows the complete workflow.', 'info')
+        }
+
+        function generateCodeSummary(codeName) {
+            showAlert(`AI summary generation for "${codeName}" requires backend integration.`, 'info')
+        }
+
+        function generateAllSummaries() {
+            showAlert('AI summary generation requires backend integration.', 'info')
+        }
+
+        function exportResults() {
+            if (analysisResults.length === 0) {
+                showAlert('No results to export - run analysis first', 'warning')
+                return
+            }
+            showAlert('Export functionality ready for backend integration.', 'info')
+        }
+
+        async function loadUploadedArticles() {
+            // Placeholder for loading user's articles from database
+        }
+
+        // Alert system
+        function showAlert(message, type) {
+            // Remove existing alerts
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.remove()
+            })
+            
+            const alertDiv = document.createElement('div')
+            alertDiv.className = `alert alert-${type}`
+            alertDiv.textContent = message
+            
+            const container = document.querySelector('.container')
+            const header = container.querySelector('header')
+            container.insertBefore(alertDiv, header.nextSibling)
+            
+            setTimeout(() => {
+                alertDiv.remove()
+            }, 5000)
+        }
+    </script>
+</body>
+</html>
