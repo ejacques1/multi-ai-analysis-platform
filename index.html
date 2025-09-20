@@ -1539,7 +1539,6 @@
                 }
             }
             renderFileList()
-            renderResultsTable()  // Update results table to show uploaded files
         }
 
         async function extractTextFromPDF(file) {
@@ -1599,27 +1598,26 @@
                 const fileName = uploadedFiles[fileIndex].name
                 uploadedFiles.splice(fileIndex, 1)
                 renderFileList()
-                renderResultsTable()  // Update results table when file is removed
                 showAlert(`File "${fileName}" removed successfully!`, 'success')
             }
         }
 
         function previewFile(id) {
-            const file = uploadedFiles.find(f => f.id === id)
-            if (file) {
-                // Show first 1000 chars
-                const start = file.text.substring(0, 1000)
-                
-                // Show middle section (where article content likely is)
-                const midPoint = Math.floor(file.text.length / 2)
-                const middle = file.text.substring(midPoint - 500, midPoint + 500)
-                
-                // Show end
-                const end = file.text.substring(file.text.length - 1000)
-                
-                alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
-            }
-        }
+    const file = uploadedFiles.find(f => f.id === id)
+    if (file) {
+        // Show first 1000 chars
+        const start = file.text.substring(0, 1000)
+        
+        // Show middle section (where article content likely is)
+        const midPoint = Math.floor(file.text.length / 2)
+        const middle = file.text.substring(midPoint - 500, midPoint + 500)
+        
+        // Show end
+        const end = file.text.substring(file.text.length - 1000)
+        
+        alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
+    }
+}
 
         // Results table functions
         function renderResultsTable() {
@@ -1688,55 +1686,62 @@
             
             tableHeader.innerHTML = headerHTML
             
-            // Build body - Show uploaded files instead of sample data
+            // Build body
             let bodyHTML = ''
             
-            if (uploadedFiles.length === 0) {
-                bodyHTML = `<tr>
-                    <td colspan="${allCodes.length + 2}" style="text-align: center; color: #6c757d; padding: 2rem;">
-                        Upload articles to see them listed here.
-                    </td>
-                </tr>`
-            } else {
-                // Show uploaded files
-                uploadedFiles.forEach((file, index) => {
+            if (analysisResults.length === 0) {
+                // Show sample data for demonstration
+                const sampleArticles = [
+                    { name: 'Sample_Article_1.pdf', date: '2024-01-15' },
+                    { name: 'Sample_Article_2.pdf', date: '2024-01-16' },
+                    { name: 'Sample_Article_3.pdf', date: '2024-01-17' }
+                ]
+                
+                sampleArticles.forEach((article, index) => {
                     bodyHTML += '<tr>'
-                    bodyHTML += `<td><strong>${escapeHtml(file.name)}</strong> 
-                        <button class="btn btn-secondary btn-small" onclick="showFileEvidence(${file.id})" style="margin-left: 10px;">
+                    bodyHTML += `<td><strong>${article.name}</strong> 
+                        <button class="btn btn-secondary btn-small" onclick="showDemoEvidence(${index})" style="margin-left: 10px;">
                             Show ▼
                         </button>
                     </td>`
-                    bodyHTML += `<td>${new Date(file.uploaded).toLocaleDateString()}</td>`
+                    bodyHTML += `<td>${article.date}</td>`
                     
                     allCodes.forEach(code => {
                         if (code.isPlaceholder) {
                             bodyHTML += '<td class="code-cell">-</td>'
                         } else {
-                            // Show pending analysis
-                            bodyHTML += '<td class="code-cell" style="color: #6c757d;">pending</td>'
+                            // Show sample data for real codes
+                            const sampleValue = Math.random() > 0.5 ? 1 : 0
+                            bodyHTML += `<td class="code-cell">${sampleValue}</td>`
                         }
                     })
                     
                     bodyHTML += '</tr>'
                     
                     // Add hidden evidence row
-                    bodyHTML += `<tr id="file-evidence-${file.id}" class="evidence-row">`;
+                    bodyHTML += `<tr id="evidence-${index}" class="evidence-row">`;
                     bodyHTML += `<td colspan="${allCodes.length + 2}">`;
                     bodyHTML += `<div class="evidence-content">
-                        <h4>${escapeHtml(file.name)} Text Preview:</h4>
-                        <p style="font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; background: white; padding: 10px; border-radius: 4px;">
-                            ${escapeHtml(file.text.substring(0, 1000))}${file.text.length > 1000 ? '...' : ''}
-                        </p>
+                        <h4>${article.name} Evidence:</h4>
+                        <p><em>Evidence and quotes will appear here after actual analysis.</em></p>
                     </div>`;
                     bodyHTML += '</td></tr>';
                 })
             }
             
+            if (bodyHTML === '') {
+                bodyHTML = `<tr>
+                    <td colspan="${allCodes.length + 2}" style="text-align: center; color: #6c757d; padding: 2rem;">
+                        Upload articles and run analysis to see results here.
+                    </td>
+                </tr>`
+            }
+            
             tableBody.innerHTML = bodyHTML
         }
 
-        function showFileEvidence(fileId) {
-            const evidenceRow = document.getElementById(`file-evidence-${fileId}`)
+        function showDemoEvidence(index) {
+            const evidenceRow = document.getElementById(`evidence-${index}`)
             const button = event.target
             
             if (evidenceRow.classList.contains('show')) {
