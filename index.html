@@ -1603,12 +1603,21 @@
         }
 
         function previewFile(id) {
-            const file = uploadedFiles.find(f => f.id === id)
-            if (file) {
-                const preview = file.text.substring(0, 1000) + (file.text.length > 1000 ? '...' : '')
-                alert(`Text preview for ${file.name}:\n\n${preview}`)
-            }
-        }
+    const file = uploadedFiles.find(f => f.id === id)
+    if (file) {
+        // Show first 1000 chars
+        const start = file.text.substring(0, 1000)
+        
+        // Show middle section (where article content likely is)
+        const midPoint = Math.floor(file.text.length / 2)
+        const middle = file.text.substring(midPoint - 500, midPoint + 500)
+        
+        // Show end
+        const end = file.text.substring(file.text.length - 1000)
+        
+        alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
+    }
+}
 
         // Results table functions
         function renderResultsTable() {
