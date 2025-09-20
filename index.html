@@ -1535,7 +1535,28 @@
                 return
             }
 
-            showAlert('Coding scheme saved to your account!', 'success')
+            try {
+                const { data, error } = await supabase
+                    .from('coding_schemes')
+                    .insert({
+                        user_id: currentUser.id,
+                        name: schemeName,
+                        codes: currentCodes.map(code => ({
+                            name: code.name,
+                            definition: code.definition
+                        }))
+                    })
+                    .select()
+                    .single()
+
+                if (error) throw error
+
+                currentSchemeId = data.id
+                showAlert('Coding scheme saved to your account!', 'success')
+            } catch (error) {
+                console.error('Error saving coding scheme:', error)
+                showAlert(`Failed to save coding scheme: ${error.message}`, 'error')
+            }
         }
 
         async function loadCodingSchemes() {
@@ -1544,7 +1565,36 @@
                 return
             }
             
-            console.log('Loading coding schemes for user:', currentUser.id)
+            try {
+                const { data, error } = await supabase
+                    .from('coding_schemes')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false })
+
+                if (error) throw error
+
+                if (data && data.length > 0) {
+                    // Load the most recent scheme
+                    const latestScheme = data[0]
+                    currentSchemeId = latestScheme.id
+                    document.getElementById('scheme-name').value = latestScheme.name
+                    
+                    // Load codes from the scheme
+                    currentCodes = latestScheme.codes.map((code, index) => ({
+                        id: Date.now() + index,
+                        name: code.name,
+                        definition: code.definition
+                    }))
+                    
+                    renderCodes()
+                    renderResultsTable()
+                    
+                    console.log('Loaded coding scheme:', latestScheme.name)
+                }
+            } catch (error) {
+                console.error('Error loading coding schemes:', error)
+            }
         }
 
         async function loadUploadedArticles() {
@@ -1553,7 +1603,34 @@
                 return
             }
             
-            console.log('Loading uploaded articles for user:', currentUser.id)
+            try {
+                const { data, error } = await supabase
+                    .from('articles')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('uploaded_at', { ascending: false })
+
+                if (error) throw error
+
+                if (data && data.length > 0) {
+                    // Convert database articles to uploadedFiles format
+                    uploadedFiles = data.map(article => ({
+                        id: article.id,
+                        name: article.filename,
+                        size: article.file_size,
+                        text: article.extracted_text,
+                        pageTexts: article.page_texts,
+                        uploaded: article.uploaded_at
+                    }))
+                    
+                    renderFileList()
+                    renderResultsTable()
+                    
+                    console.log('Loaded articles:', uploadedFiles.length)
+                }
+            } catch (error) {
+                console.error('Error loading articles:', error)
+            }
         }
 
         // File handling functions
@@ -1629,19 +1706,48 @@
                     console.log(`Extracting text from ${file.name}`)
                     const { fullText, pageTexts } = await extractTextFromPDF(file)
                     
-                    // Create file object
-                    const fileObj = {
-                        id: Date.now() + Math.random(),
-                        name: file.name,
-                        size: file.size,
-                        text: fullText,
-                        pageTexts: pageTexts,
-                        uploaded: new Date().toISOString()
+                    // Save to database if user is logged in
+                    if (currentUser) {
+                        const { data, error } = await supabase
+                            .from('articles')
+                            .insert({
+                                user_id: currentUser.id,
+                                filename: file.name,
+                                file_size: file.size,
+                                extracted_text: fullText,
+                                page_texts: pageTexts
+                            })
+                            .select()
+                            .single()
+
+                        if (error) throw error
+
+                        // Create file object with database ID
+                        const fileObj = {
+                            id: data.id,
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: data.uploaded_at
+                        }
+                        
+                        uploadedFiles.push(fileObj)
+                    } else {
+                        // Create file object with temporary ID
+                        const fileObj = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: new Date().toISOString()
+                        }
+                        
+                        uploadedFiles.push(fileObj)
                     }
                     
-                    uploadedFiles.push(fileObj)
                     successCount++
-                    
                     console.log(`Successfully processed ${file.name}, text length: ${fullText.length}`)
                     
                 } catch (error) {
@@ -1892,7 +1998,7 @@
             console.log('Results table rendered to DOM')
         }
 
-        // Analysis functions
+        // Analysis functions - UPDATED TO USE EDGE FUNCTION
         async function startAnalysis() {
             if (!currentUser) {
                 showAlert('Please sign in to run analysis', 'error')
@@ -1907,6 +2013,32 @@
             if (uploadedFiles.length === 0) {
                 showAlert('Please upload at least one PDF file in the "Upload Articles" tab', 'error')
                 return
+            }
+
+            // Ensure we have a saved coding scheme
+            if (!currentSchemeId) {
+                const schemeName = document.getElementById('scheme-name').value.trim() || 'Default Scheme'
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('coding_schemes')
+                        .insert({
+                            user_id: currentUser.id,
+                            name: schemeName,
+                            codes: currentCodes.map(code => ({
+                                name: code.name,
+                                definition: code.definition
+                            }))
+                        })
+                        .select()
+                        .single()
+
+                    if (error) throw error
+                    currentSchemeId = data.id
+                } catch (error) {
+                    showAlert(`Failed to save coding scheme: ${error.message}`, 'error')
+                    return
+                }
             }
 
             const startBtn = document.getElementById('start-analysis-btn')
@@ -1928,17 +2060,14 @@
                 for (const file of uploadedFiles) {
                     progressText.textContent = `Analyzing ${file.name}...`
                     
-                    // Simulate analysis (replace with actual API calls)
-                    const result = await simulateFileAnalysis(file)
+                    // Call the real Edge Function
+                    const result = await analyzeFileWithAI(file)
                     analysisResults.push(result)
                     
                     completedFiles++
                     const percentage = (completedFiles / totalFiles) * 100
                     progressFill.style.width = `${percentage}%`
                     progressText.textContent = `Completed ${completedFiles}/${totalFiles} files`
-                    
-                    // Small delay to show progress
-                    await new Promise(resolve => setTimeout(resolve, 1000))
                 }
 
                 progressText.textContent = 'Analysis complete!'
@@ -1963,8 +2092,67 @@
             }
         }
 
+        // NEW FUNCTION: Real AI analysis using Edge Function
+        async function analyzeFileWithAI(file) {
+            try {
+                // Ensure file is saved to database first
+                let articleId = file.id
+                
+                // If file ID is not a UUID (meaning it's a temporary ID), save it first
+                if (typeof file.id === 'number') {
+                    const { data, error } = await supabase
+                        .from('articles')
+                        .insert({
+                            user_id: currentUser.id,
+                            filename: file.name,
+                            file_size: file.size,
+                            extracted_text: file.text,
+                            page_texts: file.pageTexts
+                        })
+                        .select()
+                        .single()
+
+                    if (error) throw error
+                    articleId = data.id
+                    
+                    // Update the file object with the real ID
+                    file.id = data.id
+                }
+
+                // Call the Edge Function
+                const { data, error } = await supabase.functions.invoke('analyze-content', {
+                    body: {
+                        articleId: articleId,
+                        schemeId: currentSchemeId,
+                        enableReliability: document.getElementById('enable-reliability').checked
+                    }
+                })
+
+                if (error) throw error
+
+                // Convert to the format your frontend expects
+                const result = {
+                    fileId: file.id,
+                    fileName: file.name,
+                    codesFound: data.results[0].codes,
+                    evidence: data.results[0].evidence,
+                    modelResults: data.results, // Store all model results
+                    reliability: data.reliability // Store reliability info
+                }
+
+                return result
+
+            } catch (error) {
+                console.error('AI analysis error for', file.name, ':', error)
+                
+                // Fallback to simulation if Edge Function fails
+                showAlert(`AI analysis failed for ${file.name}. Using simulation.`, 'warning')
+                return simulateFileAnalysis(file)
+            }
+        }
+
+        // FALLBACK FUNCTION: Keep simulation for when Edge Function fails
         async function simulateFileAnalysis(file) {
-            // This simulates the analysis - replace with actual AI API calls
             const result = {
                 fileId: file.id,
                 fileName: file.name,
