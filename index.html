@@ -653,6 +653,18 @@
             display: none;
         }
 
+        .processing-indicator {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .processing-indicator.hidden {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .tier-features {
                 grid-template-columns: 1fr;
@@ -982,10 +994,15 @@
             <h2>Upload Articles</h2>
             <p>Upload PDF articles for analysis. Files are saved to your account for reuse across analyses.</p>
 
+            <div id="processing-indicator" class="processing-indicator hidden">
+                <strong>Processing files...</strong>
+                <div id="processing-details"></div>
+            </div>
+
             <div class="file-upload" onclick="document.getElementById('file-input').click()" 
                  ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
                 <p>Click to select PDF files or drag and drop them here</p>
-                <p style="color: #6c757d; font-size: 0.9rem;">Supports multiple PDF files</p>
+                <p style="color: #6c757d; font-size: 0.9rem;">Supports multiple PDF files (max 50MB each)</p>
             </div>
             <input type="file" id="file-input" multiple accept=".pdf" style="display: none;" onchange="handleFileSelect(event)" />
 
@@ -1040,9 +1057,12 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('App initializing...')
             if (initializeSupabase()) {
                 handleAuthStateChange()
                 renderResultsTable()
+                renderCodes()
+                renderFileList()
             }
         })
 
@@ -1050,6 +1070,7 @@
         function initializeSupabase() {
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+                console.log('Supabase initialized successfully')
                 return true
             } catch (error) {
                 console.error('Failed to initialize Supabase:', error)
@@ -1173,6 +1194,7 @@
         // Handle authentication state changes
         function handleAuthStateChange() {
             supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log('Auth state changed:', event, session?.user?.email)
                 if (session) {
                     currentUser = session.user
                     await loadUserProfile()
@@ -1236,6 +1258,7 @@
         }
 
         async function loadUserData() {
+            console.log('Loading user data...')
             await Promise.all([
                 loadCodingSchemes(),
                 loadUploadedArticles(),
@@ -1418,6 +1441,9 @@
             }
 
             currentCodes.push(code)
+            console.log('Code added:', code)
+            console.log('Current codes:', currentCodes)
+            
             renderCodes()
             renderResultsTable()
 
@@ -1432,6 +1458,9 @@
             if (codeIndex > -1) {
                 const codeName = currentCodes[codeIndex].name
                 currentCodes.splice(codeIndex, 1)
+                console.log('Code removed:', codeName)
+                console.log('Current codes:', currentCodes)
+                
                 renderCodes()
                 renderResultsTable()
                 showAlert(`Code "${codeName}" removed successfully!`, 'success')
@@ -1440,6 +1469,7 @@
 
         function renderCodes() {
             const codesList = document.getElementById('codes-list')
+            console.log('Rendering codes:', currentCodes)
             
             if (currentCodes.length === 0) {
                 codesList.innerHTML = '<p style="color: #6c757d;">No codes defined yet. Add your first code above.</p>'
@@ -1460,6 +1490,7 @@
             })
             
             codesList.innerHTML = codesHTML
+            console.log('Codes rendered to DOM')
         }
 
         async function saveCodingScheme() {
@@ -1479,11 +1510,11 @@
 
         async function loadCodingSchemes() {
             if (!currentUser) {
-                showAlert('Please sign in to load coding schemes', 'error')
+                console.log('No user logged in, skipping coding scheme load')
                 return
             }
             
-            showAlert('Loading saved coding schemes...', 'info')
+            console.log('Loading coding schemes for user:', currentUser.id)
         }
 
         // File handling functions
@@ -1491,6 +1522,10 @@
             e.preventDefault()
             e.target.classList.remove('dragover')
             const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf')
+            if (files.length === 0) {
+                showAlert('Please select PDF files only', 'warning')
+                return
+            }
             processFiles(files)
         }
 
@@ -1505,24 +1540,57 @@
 
         function handleFileSelect(e) {
             const files = Array.from(e.target.files)
-            processFiles(files)
+            if (files.length === 0) return
+            
+            const pdfFiles = files.filter(file => file.type === 'application/pdf')
+            if (pdfFiles.length === 0) {
+                showAlert('Please select PDF files only', 'warning')
+                return
+            }
+            
+            if (pdfFiles.length !== files.length) {
+                showAlert(`Only ${pdfFiles.length} of ${files.length} files are PDFs. Processing PDFs only.`, 'warning')
+            }
+            
+            processFiles(pdfFiles)
         }
 
         async function processFiles(files) {
-            for (const file of files) {
+            console.log('Processing files:', files.length)
+            
+            const processingIndicator = document.getElementById('processing-indicator')
+            const processingDetails = document.getElementById('processing-details')
+            
+            processingIndicator.classList.remove('hidden')
+            processingDetails.innerHTML = `Processing ${files.length} file(s)...`
+            
+            let successCount = 0
+            let errorCount = 0
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i]
+                
                 try {
+                    console.log(`Processing file ${i + 1}/${files.length}: ${file.name}`)
+                    processingDetails.innerHTML = `Processing ${file.name} (${i + 1}/${files.length})...`
+                    
+                    // Validate file size
                     if (file.size > 50 * 1024 * 1024) {
                         throw new Error('File too large (max 50MB)')
                     }
                     
+                    // Check for duplicates
                     if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        console.log(`File "${file.name}" already uploaded, skipping`)
                         showAlert(`File "${file.name}" already uploaded`, 'warning')
                         continue
                     }
                     
-                    showAlert(`Processing ${file.name}...`, 'info')
-                    
+                    // Extract text from PDF
+                    console.log(`Extracting text from ${file.name}`)
                     const { fullText, pageTexts } = await extractTextFromPDF(file)
+                    
+                    // Create file object
                     const fileObj = {
                         id: Date.now() + Math.random(),
                         name: file.name,
@@ -1531,43 +1599,93 @@
                         pageTexts: pageTexts,
                         uploaded: new Date().toISOString()
                     }
+                    
                     uploadedFiles.push(fileObj)
-                    showAlert(`Successfully processed ${file.name}`, 'success')
+                    successCount++
+                    
+                    console.log(`Successfully processed ${file.name}, text length: ${fullText.length}`)
+                    
                 } catch (error) {
                     console.error('Error processing file:', file.name, error)
                     showAlert(`Error processing ${file.name}: ${error.message}`, 'error')
+                    errorCount++
                 }
             }
-            renderFileList()
+            
+            processingIndicator.classList.add('hidden')
+            
+            if (successCount > 0) {
+                showAlert(`Successfully processed ${successCount} file(s)`, 'success')
+                renderFileList()
+                
+                // Update results table to show uploaded files
+                renderResultsTable()
+            }
+            
+            if (errorCount > 0) {
+                showAlert(`Failed to process ${errorCount} file(s)`, 'error')
+            }
+            
+            console.log('File processing complete. Total uploaded files:', uploadedFiles.length)
         }
 
         async function extractTextFromPDF(file) {
             try {
+                console.log(`Starting PDF text extraction for ${file.name}`)
                 const arrayBuffer = await file.arrayBuffer()
-                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise
+                
+                const pdf = await pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true
+                }).promise
+                
+                console.log(`PDF loaded, pages: ${pdf.numPages}`)
+                
                 let fullText = ''
                 let pageTexts = []
 
                 for (let i = 1; i <= pdf.numPages; i++) {
+                    console.log(`Extracting text from page ${i}/${pdf.numPages}`)
+                    
                     const page = await pdf.getPage(i)
                     const textContent = await page.getTextContent()
-                    const pageText = textContent.items.map(item => item.str).join(' ')
-                    pageTexts.push({ page: i, text: pageText })
+                    
+                    // Extract text items and join them
+                    const pageText = textContent.items
+                        .filter(item => item.str && item.str.trim())
+                        .map(item => item.str)
+                        .join(' ')
+                    
+                    pageTexts.push({ 
+                        page: i, 
+                        text: pageText 
+                    })
+                    
                     fullText += pageText + '\n'
                 }
 
-                if (fullText.trim().length === 0) {
-                    throw new Error('No text could be extracted from this PDF')
+                // Clean up the text
+                fullText = fullText
+                    .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+                    .trim()
+
+                if (fullText.length === 0) {
+                    throw new Error('No text could be extracted from this PDF. The file may be scanned images or encrypted.')
                 }
 
+                console.log(`Text extraction complete. Total text length: ${fullText.length}`)
                 return { fullText, pageTexts }
+                
             } catch (error) {
+                console.error('PDF extraction error:', error)
                 throw new Error(`Failed to process PDF: ${error.message}`)
             }
         }
 
         function renderFileList() {
             const fileList = document.getElementById('file-list')
+            console.log('Rendering file list:', uploadedFiles.length, 'files')
             
             if (uploadedFiles.length === 0) {
                 fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet.</p>'
@@ -1576,11 +1694,15 @@
 
             let filesHTML = ''
             uploadedFiles.forEach(file => {
+                const fileSize = (file.size / 1024).toFixed(1)
+                const uploadDate = new Date(file.uploaded).toLocaleString()
+                const textLength = file.text ? file.text.length : 0
+                
                 filesHTML += `
                     <div class="code-item">
                         <h4>${escapeHtml(file.name)}</h4>
-                        <p>Size: ${(file.size / 1024).toFixed(1)} KB | Uploaded: ${new Date(file.uploaded).toLocaleString()}</p>
-                        <p>Text extracted: ${file.text.length} characters</p>
+                        <p>Size: ${fileSize} KB | Uploaded: ${uploadDate}</p>
+                        <p>Text extracted: ${textLength} characters</p>
                         <div class="code-actions">
                             <button class="btn btn-secondary" onclick="previewFile(${file.id})">Preview Text</button>
                             <button class="btn btn-danger" onclick="removeFile(${file.id})">Remove</button>
@@ -1590,6 +1712,7 @@
             })
             
             fileList.innerHTML = filesHTML
+            console.log('File list rendered to DOM')
         }
 
         function removeFile(id) {
@@ -1597,30 +1720,41 @@
             if (fileIndex > -1) {
                 const fileName = uploadedFiles[fileIndex].name
                 uploadedFiles.splice(fileIndex, 1)
+                console.log(`File removed: ${fileName}`)
+                console.log('Remaining files:', uploadedFiles.length)
+                
                 renderFileList()
+                renderResultsTable()
                 showAlert(`File "${fileName}" removed successfully!`, 'success')
             }
         }
 
         function previewFile(id) {
-    const file = uploadedFiles.find(f => f.id === id)
-    if (file) {
-        // Show first 1000 chars
-        const start = file.text.substring(0, 1000)
-        
-        // Show middle section (where article content likely is)
-        const midPoint = Math.floor(file.text.length / 2)
-        const middle = file.text.substring(midPoint - 500, midPoint + 500)
-        
-        // Show end
-        const end = file.text.substring(file.text.length - 1000)
-        
-        alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
-    }
-}
+            const file = uploadedFiles.find(f => f.id === id)
+            if (file && file.text) {
+                // Show first 1000 chars
+                const start = file.text.substring(0, 1000)
+                
+                // Show middle section (where article content likely is)
+                const midPoint = Math.floor(file.text.length / 2)
+                const middle = file.text.substring(midPoint - 500, midPoint + 500)
+                
+                // Show end
+                const end = file.text.substring(file.text.length - 1000)
+                
+                alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
+            } else {
+                showAlert('No text content available for this file', 'error')
+            }
+        }
 
         // Results table functions
         function renderResultsTable() {
+            console.log('Rendering results table...')
+            console.log('Current codes:', currentCodes.length)
+            console.log('Uploaded files:', uploadedFiles.length)
+            console.log('Analysis results:', analysisResults.length)
+            
             const allCodes = [...currentCodes]
             
             // Add placeholders if we have fewer than 5 codes
@@ -1674,139 +1808,5 @@
                 if (code.isPlaceholder) {
                     headerHTML += '<td class="code-cell">-</td>'
                 } else {
+                    const isDisabled = analysisResults.length === 0 ? 'disabled' : ''
                     headerHTML += `<td class="code-cell">
-                        <button class="btn btn-secondary btn-small" onclick="generateCodeSummary('${escapeHtml(code.name)}')" disabled>
-                            Generate ▼
-                        </button>
-                    </td>`
-                }
-            })
-            
-            headerHTML += '</tr>'
-            
-            tableHeader.innerHTML = headerHTML
-            
-            // Build body
-            let bodyHTML = ''
-            
-            if (analysisResults.length === 0) {
-                // Show sample data for demonstration
-                const sampleArticles = [
-                    { name: 'Sample_Article_1.pdf', date: '2024-01-15' },
-                    { name: 'Sample_Article_2.pdf', date: '2024-01-16' },
-                    { name: 'Sample_Article_3.pdf', date: '2024-01-17' }
-                ]
-                
-                sampleArticles.forEach((article, index) => {
-                    bodyHTML += '<tr>'
-                    bodyHTML += `<td><strong>${article.name}</strong> 
-                        <button class="btn btn-secondary btn-small" onclick="showDemoEvidence(${index})" style="margin-left: 10px;">
-                            Show ▼
-                        </button>
-                    </td>`
-                    bodyHTML += `<td>${article.date}</td>`
-                    
-                    allCodes.forEach(code => {
-                        if (code.isPlaceholder) {
-                            bodyHTML += '<td class="code-cell">-</td>'
-                        } else {
-                            // Show sample data for real codes
-                            const sampleValue = Math.random() > 0.5 ? 1 : 0
-                            bodyHTML += `<td class="code-cell">${sampleValue}</td>`
-                        }
-                    })
-                    
-                    bodyHTML += '</tr>'
-                    
-                    // Add hidden evidence row
-                    bodyHTML += `<tr id="evidence-${index}" class="evidence-row">`;
-                    bodyHTML += `<td colspan="${allCodes.length + 2}">`;
-                    bodyHTML += `<div class="evidence-content">
-                        <h4>${article.name} Evidence:</h4>
-                        <p><em>Evidence and quotes will appear here after actual analysis.</em></p>
-                    </div>`;
-                    bodyHTML += '</td></tr>';
-                })
-            }
-            
-            if (bodyHTML === '') {
-                bodyHTML = `<tr>
-                    <td colspan="${allCodes.length + 2}" style="text-align: center; color: #6c757d; padding: 2rem;">
-                        Upload articles and run analysis to see results here.
-                    </td>
-                </tr>`
-            }
-            
-            tableBody.innerHTML = bodyHTML
-        }
-
-        function showDemoEvidence(index) {
-            const evidenceRow = document.getElementById(`evidence-${index}`)
-            const button = event.target
-            
-            if (evidenceRow.classList.contains('show')) {
-                evidenceRow.classList.remove('show')
-                button.textContent = 'Show ▼'
-            } else {
-                evidenceRow.classList.add('show')
-                button.textContent = 'Hide ▲'
-            }
-        }
-
-        // Analysis functions
-        async function startAnalysis() {
-            if (currentCodes.length === 0) {
-                showAlert('Please define at least one code before starting analysis', 'error')
-                return
-            }
-
-            if (uploadedFiles.length === 0) {
-                showAlert('Please upload at least one article before starting analysis', 'error')
-                return
-            }
-
-            showAlert('AI Analysis backend integration is ready for deployment. This demo shows the complete workflow.', 'info')
-        }
-
-        function generateCodeSummary(codeName) {
-            showAlert(`AI summary generation for "${codeName}" requires backend integration.`, 'info')
-        }
-
-        function generateAllSummaries() {
-            showAlert('AI summary generation requires backend integration.', 'info')
-        }
-
-        function exportResults() {
-            if (analysisResults.length === 0) {
-                showAlert('No results to export - run analysis first', 'warning')
-                return
-            }
-            showAlert('Export functionality ready for backend integration.', 'info')
-        }
-
-        async function loadUploadedArticles() {
-            // Placeholder for loading user's articles from database
-        }
-
-        // Alert system
-        function showAlert(message, type) {
-            // Remove existing alerts
-            document.querySelectorAll('.alert').forEach(alert => {
-                alert.remove()
-            })
-            
-            const alertDiv = document.createElement('div')
-            alertDiv.className = `alert alert-${type}`
-            alertDiv.textContent = message
-            
-            const container = document.querySelector('.container')
-            const header = container.querySelector('header')
-            container.insertBefore(alertDiv, header.nextSibling)
-            
-            setTimeout(() => {
-                alertDiv.remove()
-            }, 5000)
-        }
-    </script>
-</body>
-</html>
