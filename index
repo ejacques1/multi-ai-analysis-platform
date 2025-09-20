@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-AI Qualitative Analysis Platform</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-small {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
+        .code-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .code-item h4 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-item p {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #5a6fd8;
+            background: #f8f9ff;
+        }
+
+        .file-upload.dragover {
+            border-color: #5a6fd8;
+            background: #f0f4ff;
+        }
+
+        .tier-section {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .tier-section.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .tier-header h3 {
+            margin: 0;
+            color: #495057;
+        }
+
+        .tier-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tier-badge.free {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .tier-badge.premium {
+            background: #667eea;
+            color: white;
+        }
+
+        .tier-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .feature {
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .usage-meter {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .usage-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .premium-config {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .info-text {
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .api-config small {
+            display: block;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .tier-section.premium-tier .tier-features {
+            grid-template-columns: 1fr;
+        }
+
+        /* Results table styling */
+        .results-container {
+            overflow-x: auto;
+            margin-top: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+            background: white;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .results-table .code-header {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .results-table .placeholder-code {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .results-table .real-code {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .results-table .code-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .results-table .totals-row {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .results-table .summary-row {
+            background: #e9ecef;
+        }
+
+        .evidence-row {
+            display: none;
+        }
+
+        .evidence-row.show {
+            display: table-row;
+        }
+
+        .evidence-content {
+            background: #f8f9fa;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .demo-notice {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #004085;
+        }
+
+        .demo-notice strong {
+            color: #002752;
+        }
+
+        @media (max-width: 768px) {
+            .tier-features {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .tier-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .tab-nav {
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                min-width: auto;
+                flex: 1 1 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Multi-AI Qualitative Analysis</h1>
+            <p class="subtitle">Advanced content analysis with multiple AI models for research reliability</p>
+        </header>
+
+        <div class="demo-notice">
+            <strong>Platform Demo:</strong> This interface shows the complete analysis workflow and expected output format. 
+            Backend AI integration is ready for deployment - contact for production implementation.
+        </div>
+
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('results')">Expected Output</button>
+            <button class="tab-btn" onclick="showTab('setup')">Setup & Config</button>
+            <button class="tab-btn" onclick="showTab('codes')">Coding Schemes</button>
+            <button class="tab-btn" onclick="showTab('upload')">Upload Articles</button>
+            <button class="tab-btn" onclick="showTab('analysis')">Run Analysis</button>
+        </nav>
+
+        <!-- Results Tab - Now first to show expected output -->
+        <div id="results" class="tab-content active">
+            <h2>Analysis Results Preview</h2>
+            <p>This shows the expected output format. The table starts with placeholder codes and dynamically adapts as you define your actual coding scheme.</p>
+
+            <div style="margin-bottom: 2rem;">
+                <button class="btn" onclick="exportResults()" disabled>Export to CSV</button>
+                <button class="btn btn-secondary" onclick="generateAllSummaries()" disabled>Generate AI Summaries</button>
+                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;">Available after analysis completion</span>
+            </div>
+
+            <div class="results-container">
+                <table class="results-table" id="results-table">
+                    <thead id="results-header">
+                        <!-- Dynamic headers will be inserted here -->
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="summary-section" class="hidden">
+                <h3>AI-Generated Summaries</h3>
+                <div id="summary-content">
+                    <!-- Summaries will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup Tab -->
+        <div id="setup" class="tab-content">
+            <h2>API Configuration</h2>
+            <p>Choose between our free tier or bring your own API keys for unlimited usage.</p>
+            
+            <!-- Free Tier Section -->
+            <div class="tier-section free-tier active">
+                <div class="tier-header">
+                    <h3>🎯 FREE TIER (Powered by our API keys)</h3>
+                    <span class="tier-badge free">Currently Active</span>
+                </div>
+                <div class="tier-features">
+                    <div class="feature-list">
+                        <div class="feature">✅ 10 analyses per month</div>
+                        <div class="feature">✅ Up to 5 articles per analysis</div>
+                        <div class="feature">✅ GPT-3.5 Turbo analysis</div>
+                        <div class="feature">✅ Basic reliability checking</div>
+                    </div>
+                    <div class="usage-meter">
+                        <div class="usage-header">
+                            <span>Usage this month:</span>
+                            <span id="usage-count">0/10 analyses used</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="usage-progress"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Tier Section -->
+            <div class="tier-section premium-tier">
+                <div class="tier-header">
+                    <h3>🚀 PREMIUM TIER (Your own API keys = unlimited)</h3>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="premium-toggle" onchange="togglePremiumMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="tier-features">
+                    <div class="feature-list">
+                        <div class="feature">• Unlimited analyses</div>
+                        <div class="feature">• Latest AI models (GPT-4, Claude 3.5, etc.)</div>
+                        <div class="feature">• Multi-model reliability checking</div>
+                        <div class="feature">• Priority processing</div>
+                    </div>
+                </div>
+
+                <div id="premium-config" class="premium-config hidden">
+                    <p class="info-text">ℹ️ Enter at least one API key to enable premium features</p>
+                    <div class="api-config">
+                        <div class="form-group">
+                            <label for="openai-key">OpenAI API Key (Optional)</label>
+                            <input type="password" id="openai-key" placeholder="sk-..." />
+                            <small>For GPT-4, GPT-3.5 models</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="anthropic-key">Anthropic API Key (Optional)</label>
+                            <input type="password" id="anthropic-key" placeholder="sk-ant-..." />
+                            <small>For Claude 3.5 Sonnet models</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="google-key">Google AI API Key (Optional)</label>
+                            <input type="password" id="google-key" placeholder="AI..." />
+                            <small>For Gemini models</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn" onclick="saveConfiguration()">Save Configuration</button>
+                <button class="btn btn-secondary" onclick="testConnection()" id="test-btn">Test Connection</button>
+            </div>
+        </div>
+
+        <!-- Coding Schemes Tab -->
+        <div id="codes" class="tab-content">
+            <h2>Coding Schemes</h2>
+            <p>Define your codes and operational definitions for analysis. As you add codes, they will replace the placeholder columns in the results table.</p>
+
+            <div class="form-group">
+                <label for="scheme-name">Coding Scheme Name</label>
+                <input type="text" id="scheme-name" placeholder="e.g., Emotional Support Analysis" />
+            </div>
+
+            <h3>Add New Code</h3>
+            <div class="form-group">
+                <label for="code-name">Code Name</label>
+                <input type="text" id="code-name" placeholder="e.g., Emotional Support" />
+            </div>
+            <div class="form-group">
+                <label for="code-definition">Operational Definition</label>
+                <textarea id="code-definition" placeholder="Detailed description of what this code represents and how to identify it in text..."></textarea>
+            </div>
+            <button class="btn" onclick="addCode()">Add Code</button>
+
+            <h3>Current Codes</h3>
+            <div id="codes-list">
+                <!-- Codes will be dynamically added here -->
+            </div>
+
+            <button class="btn" onclick="saveCodingScheme()">Save Coding Scheme</button>
+            <button class="btn btn-secondary" onclick="loadCodingScheme()">Load Existing Scheme</button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div id="upload" class="tab-content">
+            <h2>Upload Articles</h2>
+            <p>Upload PDF articles for analysis. Text will be extracted automatically with page number tracking.</p>
+
+            <div class="file-upload" onclick="document.getElementById('file-input').click()" 
+                 ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <p>Click to select PDF files or drag and drop them here</p>
+                <p style="color: #6c757d; font-size: 0.9rem;">Supports multiple PDF files</p>
+            </div>
+            <input type="file" id="file-input" multiple accept=".pdf" style="display: none;" onchange="handleFileSelect(event)" />
+
+            <div id="file-list" style="margin-top: 2rem;">
+                <!-- Uploaded files will be listed here -->
+            </div>
+        </div>
+
+        <!-- Analysis Tab -->
+        <div id="analysis" class="tab-content">
+            <h2>Run Analysis</h2>
+            <p>Execute the analysis across your uploaded articles using multiple AI models.</p>
+
+            <div class="alert alert-info">
+                <strong>Demo Mode:</strong> This interface shows the complete workflow. Backend AI integration is ready for production deployment.
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enable-reliability" checked />
+                    Enable Multi-Model Reliability Check
+                </label>
+                <p style="color: #6c757d; font-size: 0.9rem;">Compare results across different AI models for validation</p>
+            </div>
+
+            <button class="btn" onclick="startAnalysis()" id="start-analysis-btn">
+                Start Analysis (Demo)
+            </button>
+
+            <div id="analysis-progress" class="hidden">
+                <h3>Analysis Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p id="progress-text">Initializing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentCodes = [];
+        let placeholderCodes = [];
+        let uploadedFiles = [];
+        let analysisResults = [];
+        let isPremiumMode = false;
+        let monthlyUsage = { count: 0, month: getCurrentMonth() };
+
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Utility functions
+        function getCurrentMonth() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function saveToStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                return true;
+            } catch (error) {
+                console.error('Storage failed:', error);
+                showAlert('Failed to save data. Storage may be full.', 'error');
+                return false;
+            }
+        }
+
+        function loadFromStorage(key, defaultValue = null) {
+            try {
+                const stored = localStorage.getItem(key);
+                return stored ? JSON.parse(stored) : defaultValue;
+            } catch (error) {
+                console.error('Failed to load from storage:', error);
+                return defaultValue;
+            }
+        }
+
+        // Initialize placeholder codes
+        function initializePlaceholderCodes() {
+            placeholderCodes = [
+                { name: 'Code 1', isPlaceholder: true },
+                { name: 'Code 2', isPlaceholder: true },
+                { name: 'Code 3', isPlaceholder: true },
+                { name: 'Code 4', isPlaceholder: true },
+                { name: 'Code 5', isPlaceholder: true }
+            ];
+        }
+
+        // Usage tracking functions
+        function loadUsageData() {
+            const stored = loadFromStorage('monthlyUsage');
+            if (stored) {
+                monthlyUsage = stored;
+                // Reset if new month
+                if (monthlyUsage.month !== getCurrentMonth()) {
+                    monthlyUsage = { count: 0, month: getCurrentMonth() };
+                    saveToStorage('monthlyUsage', monthlyUsage);
+                }
+            }
+            updateUsageDisplay();
+        }
+
+        function updateUsageDisplay() {
+            const usageCount = document.getElementById('usage-count');
+            const usageProgress = document.getElementById('usage-progress');
+            
+            if (usageCount && usageProgress) {
+                usageCount.textContent = `${monthlyUsage.count}/10 analyses used`;
+                const percentage = (monthlyUsage.count / 10) * 100;
+                usageProgress.style.width = `${Math.min(percentage, 100)}%`;
+                
+                // Change color if approaching limit
+                if (percentage >= 80) {
+                    usageProgress.style.background = '#dc3545';
+                } else if (percentage >= 60) {
+                    usageProgress.style.background = '#ffc107';
+                } else {
+                    usageProgress.style.background = '#667eea';
+                }
+            }
+        }
+
+        function canUseFreeTier() {
+            return monthlyUsage.count < 10;
+        }
+
+        function incrementUsage() {
+            monthlyUsage.count++;
+            saveToStorage('monthlyUsage', monthlyUsage);
+            updateUsageDisplay();
+        }
+
+        // Tab navigation
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Configuration functions
+        function togglePremiumMode() {
+            isPremiumMode = document.getElementById('premium-toggle').checked;
+            const premiumConfig = document.getElementById('premium-config');
+            const freeTier = document.querySelector('.free-tier');
+            const premiumTier = document.querySelector('.premium-tier');
+            
+            if (isPremiumMode) {
+                premiumConfig.classList.remove('hidden');
+                freeTier.classList.remove('active');
+                premiumTier.classList.add('active');
+                freeTier.querySelector('.tier-badge').textContent = 'Available';
+                freeTier.querySelector('.tier-badge').className = 'tier-badge';
+                const premiumBadge = premiumTier.querySelector('.tier-badge') || document.createElement('span');
+                premiumBadge.textContent = 'Currently Active';
+                premiumBadge.className = 'tier-badge premium';
+                if (!premiumTier.querySelector('.tier-badge')) {
+                    premiumTier.querySelector('.tier-header').appendChild(premiumBadge);
+                }
+            } else {
+                premiumConfig.classList.add('hidden');
+                freeTier.classList.add('active');
+                premiumTier.classList.remove('active');
+                freeTier.querySelector('.tier-badge').textContent = 'Currently Active';
+                freeTier.querySelector('.tier-badge').className = 'tier-badge free';
+                const premiumBadge = premiumTier.querySelector('.tier-badge');
+                if (premiumBadge) {
+                    premiumBadge.textContent = 'Available';
+                    premiumBadge.className = 'tier-badge';
+                }
+            }
+        }
+
+        function saveConfiguration() {
+            const config = {
+                isPremiumMode: isPremiumMode,
+                openaiKey: isPremiumMode ? document.getElementById('openai-key').value : '',
+                anthropicKey: isPremiumMode ? document.getElementById('anthropic-key').value : '',
+                googleKey: isPremiumMode ? document.getElementById('google-key').value : ''
+            };
+
+            if (saveToStorage('analysisConfig', config)) {
+                showAlert('Configuration saved successfully!', 'success');
+            }
+        }
+
+        function loadConfiguration() {
+            const config = loadFromStorage('analysisConfig', {});
+            
+            if (config.isPremiumMode) {
+                document.getElementById('premium-toggle').checked = true;
+                togglePremiumMode();
+                
+                if (config.openaiKey) document.getElementById('openai-key').value = config.openaiKey;
+                if (config.anthropicKey) document.getElementById('anthropic-key').value = config.anthropicKey;
+                if (config.googleKey) document.getElementById('google-key').value = config.googleKey;
+            }
+        }
+
+        function testConnection() {
+            const testBtn = document.getElementById('test-btn');
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            
+            setTimeout(() => {
+                if (isPremiumMode) {
+                    const hasKeys = document.getElementById('openai-key').value || 
+                                   document.getElementById('anthropic-key').value || 
+                                   document.getElementById('google-key').value;
+                    
+                    if (hasKeys) {
+                        showAlert('Configuration validated! Premium mode ready for backend integration.', 'success');
+                    } else {
+                        showAlert('Please enter at least one API key for premium mode.', 'warning');
+                    }
+                } else {
+                    showAlert('Free tier configuration ready!', 'success');
+                }
+                
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test Connection';
+            }, 1500);
+        }
+
+        // Dynamic table rendering
+        function renderResultsTable() {
+            const allCodes = [...currentCodes];
+            
+            // Add placeholders if we have fewer than 5 codes
+            while (allCodes.length < 5) {
+                const placeholderIndex = allCodes.length;
+                allCodes.push({
+                    name: `Code ${placeholderIndex + 1}`,
+                    isPlaceholder: true
+                });
+            }
+
+            const tableHeader = document.getElementById('results-header');
+            const tableBody = document.getElementById('results-body');
+            
+            // Build header
+            let headerHTML = '<tr>';
+            headerHTML += '<th>Article</th>';
+            headerHTML += '<th>Date</th>';
+            
+            allCodes.forEach(code => {
+                const codeClass = code.isPlaceholder ? 'placeholder-code' : 'real-code';
+                headerHTML += `<th class="code-header ${codeClass}">${escapeHtml(code.name)}</th>`;
+            });
+            
+            headerHTML += '</tr>';
+            
+            // Add totals row
+            headerHTML += '<tr class="totals-row">';
+            headerHTML += '<td><strong>TOTAL</strong></td>';
+            headerHTML += '<td></td>';
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>';
+                } else {
+                    const total = analysisResults.filter(result => 
+                        result.codesFound && result.codesFound[code.name] === 1
+                    ).length;
+                    headerHTML += `<td class="code-cell">${total}</td>`;
+                }
+            });
+            
+            headerHTML += '</tr>';
+            
+            // Add AI Summary row
+            headerHTML += '<tr class="summary-row">';
+            headerHTML += '<td><strong>AI SUMMARY</strong></td>';
+            headerHTML += '<td></td>';
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>';
+                } else {
+                    headerHTML += `<td class="code-cell">
+                        <button class="btn btn-secondary btn-small" onclick="generateCodeSummary('${escapeHtml(code.name)}')" disabled>
+                            Generate ▼
+                        </button>
+                    </td>`;
+                }
+            });
+            
+            headerHTML += '</tr>';
+            
+            tableHeader.innerHTML = headerHTML;
+            
+            // Build body
+            let bodyHTML = '';
+            
+            if (analysisResults.length === 0) {
+                // Show sample data for demonstration
+                const sampleArticles = [
+                    { name: 'Sample_Article_1.pdf', date: '2024-01-15' },
+                    { name: 'Sample_Article_2.pdf', date: '2024-01-16' },
+                    { name: 'Sample_Article_3.pdf', date: '2024-01-17' }
+                ];
+                
+                sampleArticles.forEach((article, index) => {
+                    bodyHTML += '<tr>';
+                    bodyHTML += `<td><strong>${article.name}</strong> 
+                        <button class="btn btn-secondary btn-small" onclick="showDemoEvidence(${index})" style="margin-left: 10px;">
+                            Show ▼
+                        </button>
+                    </td>`;
+                    bodyHTML += `<td>${article.date}</td>`;
+                    
+                    allCodes.forEach(code => {
+                        if (code.isPlaceholder) {
+                            bodyHTML += '<td class="code-cell">-</td>';
+                        } else {
+                            // Show sample data for real codes
+                            const sampleValue = Math.random() > 0.5 ? 1 : 0;
+                            bodyHTML += `<td class="code-cell">${sampleValue}</td>`;
+                        }
+                    });
+                    
+                    bodyHTML += '</tr>';
+                    
+                    // Add hidden evidence row
+                    bodyHTML += `<tr id="evidence-${index}" class="evidence-row">`;
+                    bodyHTML += `<td colspan="${allCodes.length + 2}">`;
+                    bodyHTML += `<div class="evidence-content">
+                        <h4>${article.name} Evidence:</h4>
+                        <p><em>Evidence and quotes will appear here after actual analysis.</em></p>
+                    </div>`;
+                    bodyHTML += '</td></tr>';
+                });
+            } else {
+                // Show real analysis results
+                analysisResults.forEach((result, index) => {
+                    bodyHTML += '<tr>';
+                    bodyHTML += `<td><strong>${escapeHtml(result.articleName)}</strong> 
+                        <button class="btn btn-secondary btn-small" onclick="toggleEvidence(${index})" style="margin-left: 10px;">
+                            Show ▼
+                        </button>
+                    </td>`;
+                    bodyHTML += `<td>${result.date}</td>`;
+                    
+                    allCodes.forEach(code => {
+                        if (code.isPlaceholder) {
+                            bodyHTML += '<td class="code-cell">-</td>';
+                        } else {
+                            const found = result.codesFound && result.codesFound[code.name] ? result.codesFound[code.name] : 0;
+                            bodyHTML += `<td class="code-cell">${found}</td>`;
+                        }
+                    });
+                    
+                    bodyHTML += '</tr>';
+                    
+                    // Add hidden evidence row
+                    bodyHTML += `<tr id="evidence-${index}" class="evidence-row">`;
+                    bodyHTML += `<td colspan="${allCodes.length + 2}">`;
+                    bodyHTML += `<div id="evidence-content-${index}" class="evidence-content">Loading evidence...</div>`;
+                    bodyHTML += '</td></tr>';
+                });
+            }
+            
+            if (bodyHTML === '') {
+                bodyHTML = `<tr>
+                    <td colspan="${allCodes.length + 2}" style="text-align: center; color: #6c757d; padding: 2rem;">
+                        Upload articles and run analysis to see results here.
+                    </td>
+                </tr>`;
+            }
+            
+            tableBody.innerHTML = bodyHTML;
+        }
+
+        function showDemoEvidence(index) {
+            const evidenceRow = document.getElementById(`evidence-${index}`);
+            const button = event.target;
+            
+            if (evidenceRow.classList.contains('show')) {
+                evidenceRow.classList.remove('show');
+                button.textContent = 'Show ▼';
+            } else {
+                evidenceRow.classList.add('show');
+                button.textContent = 'Hide ▲';
+            }
+        }
+
+        function toggleEvidence(resultIndex) {
+            const evidenceRow = document.getElementById(`evidence-${resultIndex}`);
+            const evidenceContent = document.getElementById(`evidence-content-${resultIndex}`);
+            const button = event.target;
+            
+            if (evidenceRow.classList.contains('show')) {
+                evidenceRow.classList.remove('show');
+                button.textContent = 'Show ▼';
+            } else {
+                evidenceRow.classList.add('show');
+                button.textContent = 'Hide ▲';
+                
+                // Build evidence content
+                const result = analysisResults[resultIndex];
+                let evidenceHTML = `<h4>${escapeHtml(result.articleName)} Evidence:</h4>`;
+                
+                let hasEvidence = false;
+                currentCodes.forEach(code => {
+                    if (!code.isPlaceholder && result.codesFound && result.codesFound[code.name] === 1) {
+                        hasEvidence = true;
+                        evidenceHTML += `<div style="margin-bottom: 1rem;">
+                            <strong>${escapeHtml(code.name)}:</strong>
+                            <ul style="margin: 0.5rem 0 0 1rem;">`;
+                        
+                        if (result.evidence && result.evidence[code.name]) {
+                            result.evidence[code.name].forEach(quote => {
+                                evidenceHTML += `<li style="margin-bottom: 0.5rem;">${escapeHtml(quote)}</li>`;
+                            });
+                        } else {
+                            evidenceHTML += '<li style="margin-bottom: 0.5rem;"><em>Evidence will be provided by AI analysis</em></li>';
+                        }
+                        
+                        evidenceHTML += '</ul></div>';
+                    }
+                });
+                
+                if (!hasEvidence) {
+                    evidenceHTML += '<p style="color: #6c757d;"><em>No evidence found for any codes in this article.</em></p>';
+                }
+                
+                evidenceContent.innerHTML = evidenceHTML;
+            }
+        }
+
+        // Coding scheme functions
+        function addCode() {
+            const name = document.getElementById('code-name').value.trim();
+            const definition = document.getElementById('code-definition').value.trim();
+
+            if (!name || !definition) {
+                showAlert('Please enter both code name and definition', 'error');
+                return;
+            }
+
+            // Check for duplicate names
+            if (currentCodes.some(code => code.name.toLowerCase() === name.toLowerCase())) {
+                showAlert('A code with this name already exists', 'error');
+                return;
+            }
+
+            const code = {
+                id: Date.now(),
+                name: name,
+                definition: definition,
+                isPlaceholder: false
+            };
+
+            currentCodes.push(code);
+            renderCodes();
+            renderResultsTable();
+
+            // Clear inputs
+            document.getElementById('code-name').value = '';
+            document.getElementById('code-definition').value = '';
+            
+            showAlert(`Code "${name}" added successfully!`, 'success');
+        }
+
+        function removeCode(id) {
+            const codeIndex = currentCodes.findIndex(code => code.id === id);
+            if (codeIndex > -1) {
+                const codeName = currentCodes[codeIndex].name;
+                currentCodes.splice(codeIndex, 1);
+                renderCodes();
+                renderResultsTable();
+                showAlert(`Code "${codeName}" removed successfully!`, 'success');
+            }
+        }
+
+        function renderCodes() {
+            const codesList = document.getElementById('codes-list');
+            
+            if (currentCodes.length === 0) {
+                codesList.innerHTML = '<p style="color: #6c757d;">No codes defined yet. Add your first code above.</p>';
+                return;
+            }
+
+            let codesHTML = '';
+            currentCodes.forEach(code => {
+                codesHTML += `
+                    <div class="code-item">
+                        <h4>${escapeHtml(code.name)}</h4>
+                        <p>${escapeHtml(code.definition)}</p>
+                        <div class="code-actions">
+                            <button class="btn btn-danger" onclick="removeCode(${code.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            codesList.innerHTML = codesHTML;
+        }
+
+        function saveCodingScheme() {
+            const schemeName = document.getElementById('scheme-name').value.trim();
+            if (!schemeName || currentCodes.length === 0) {
+                showAlert('Please enter a scheme name and add at least one code', 'error');
+                return;
+            }
+
+            const scheme = {
+                name: schemeName,
+                codes: currentCodes,
+                created: new Date().toISOString()
+            };
+
+            if (saveToStorage('currentCodingScheme', scheme)) {
+                showAlert('Coding scheme saved successfully!', 'success');
+            }
+        }
+
+        function loadCodingScheme() {
+            const scheme = loadFromStorage('currentCodingScheme');
+            if (scheme && scheme.name && scheme.codes) {
+                document.getElementById('scheme-name').value = scheme.name;
+                currentCodes = scheme.codes.map(code => ({
+                    ...code,
+                    isPlaceholder: false
+                }));
+                renderCodes();
+                renderResultsTable();
+                showAlert('Coding scheme loaded successfully!', 'success');
+            } else {
+                showAlert('No saved coding scheme found', 'warning');
+            }
+        }
+
+        // File handling functions
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.target.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type === 'application/pdf');
+            processFiles(files);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.target.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('dragover');
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        function validateFile(file) {
+            if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                throw new Error('File too large (max 50MB)');
+            }
+            if (file.type !== 'application/pdf') {
+                throw new Error('Only PDF files are supported');
+            }
+            return true;
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                try {
+                    validateFile(file);
+                    
+                    // Check if file already uploaded
+                    if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        showAlert(`File "${file.name}" already uploaded`, 'warning');
+                        continue;
+                    }
+                    
+                    showAlert(`Processing ${file.name}...`, 'info');
+                    
+                    const { fullText, pageTexts } = await extractTextFromPDF(file);
+                    const fileObj = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        size: file.size,
+                        text: fullText,
+                        pageTexts: pageTexts,
+                        uploaded: new Date().toISOString()
+                    };
+                    uploadedFiles.push(fileObj);
+                    showAlert(`Successfully processed ${file.name}`, 'success');
+                } catch (error) {
+                    console.error('Error processing file:', file.name, error);
+                    showAlert(`Error processing ${file.name}: ${error.message}`, 'error');
+                }
+            }
+            renderFileList();
+        }
+
+        async function extractTextFromPDF(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let fullText = '';
+                let pageTexts = [];
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    pageTexts.push({ page: i, text: pageText });
+                    fullText += pageText + '\n';
+                }
+
+                if (fullText.trim().length === 0) {
+                    throw new Error('No text could be extracted from this PDF');
+                }
+
+                return { fullText, pageTexts };
+            } catch (error) {
+                throw new Error(`Failed to process PDF: ${error.message}`);
+            }
+        }
+
+        function renderFileList() {
+            const fileList = document.getElementById('file-list');
+            
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet.</p>';
+                return;
+            }
+
+            let filesHTML = '';
+            uploadedFiles.forEach(file => {
+                filesHTML += `
+                    <div class="code-item">
+                        <h4>${escapeHtml(file.name)}</h4>
+                        <p>Size: ${(file.size / 1024).toFixed(1)} KB | Uploaded: ${new Date(file.uploaded).toLocaleString()}</p>
+                        <p>Text extracted: ${file.text.length} characters</p>
+                        <div class="code-actions">
+                            <button class="btn btn-secondary" onclick="previewFile(${file.id})">Preview Text</button>
+                            <button class="btn btn-danger" onclick="removeFile(${file.id})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            fileList.innerHTML = filesHTML;
+        }
+
+        function removeFile(id) {
+            const fileIndex = uploadedFiles.findIndex(file => file.id === id);
+            if (fileIndex > -1) {
+                const fileName = uploadedFiles[fileIndex].name;
+                uploadedFiles.splice(fileIndex, 1);
+                renderFileList();
+                showAlert(`File "${fileName}" removed successfully!`, 'success');
+            }
+        }
+
+        function previewFile(id) {
+            const file = uploadedFiles.find(f => f.id === id);
+            if (file) {
+                const preview = file.text.substring(0, 1000) + (file.text.length > 1000 ? '...' : '');
+                alert(`Text preview for ${file.name}:\n\n${preview}`);
+            }
+        }
+
+        // Analysis functions
+        function validateAnalysisRequest() {
+            if (currentCodes.length === 0) {
+                showAlert('Please define at least one code before starting analysis', 'error');
+                return false;
+            }
+
+            if (uploadedFiles.length === 0) {
+                showAlert('Please upload at least one article before starting analysis', 'error');
+                return false;
+            }
+
+            if (!isPremiumMode && !canUseFreeTier()) {
+                showAlert('Free tier limit reached (10 analyses/month). Enable premium mode with your API keys for unlimited usage.', 'error');
+                return false;
+            }
+
+            if (isPremiumMode) {
+                const hasKeys = document.getElementById('openai-key').value || 
+                               document.getElementById('anthropic-key').value || 
+                               document.getElementById('google-key').value;
+                if (!hasKeys) {
+                    showAlert('Premium mode requires at least one API key. Please enter your API keys or switch to free tier.', 'error');
+                    return false;
+                }
+            }
+
+            if (!isPremiumMode && uploadedFiles.length > 5) {
+                showAlert('Free tier is limited to 5 articles per analysis. Please remove some articles or enable premium mode.', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        async function startAnalysis() {
+            if (!validateAnalysisRequest()) return;
+
+            // Show that this is a demo
+            showAlert('Demo Mode: This shows the analysis workflow. Backend integration will provide real AI analysis.', 'info');
+
+            document.getElementById('start-analysis-btn').disabled = true;
+            document.getElementById('analysis-progress').classList.remove('hidden');
+
+            try {
+                await simulateAnalysisDemo();
+                
+                if (!isPremiumMode) {
+                    incrementUsage();
+                }
+                
+                showAlert(`Demo analysis completed! ${isPremiumMode ? '(Premium Mode)' : '(Free Tier)'}`, 'success');
+                showTab('results');
+            } catch (error) {
+                showAlert(`Analysis failed: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('start-analysis-btn').disabled = false;
+                document.getElementById('analysis-progress').classList.add('hidden');
+            }
+        }
+
+        async function simulateAnalysisDemo() {
+            const totalSteps = uploadedFiles.length * currentCodes.length;
+            let currentStep = 0;
+
+            // Clear previous results
+            analysisResults = [];
+
+            for (const file of uploadedFiles) {
+                const result = {
+                    articleId: file.id,
+                    articleName: file.name,
+                    date: new Date(file.uploaded).toLocaleDateString(),
+                    codesFound: {},
+                    evidence: {}
+                };
+
+                for (const code of currentCodes) {
+                    if (!code.isPlaceholder) {
+                        currentStep++;
+                        updateProgress(currentStep, totalSteps, `Analyzing ${file.name} for ${code.name}`);
+                        
+                        // Simulate analysis delay
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                        
+                        // Demo: Generate sample results
+                        const found = Math.random() > 0.6 ? 1 : 0;
+                        result.codesFound[code.name] = found;
+                        
+                        if (found) {
+                            result.evidence[code.name] = [
+                                `"Sample quote demonstrating ${code.name} from page ${Math.floor(Math.random() * 10) + 1}"`,
+                                `"Another relevant passage showing ${code.name} on page ${Math.floor(Math.random() * 10) + 1}"`
+                            ];
+                        }
+                    }
+                }
+
+                analysisResults.push(result);
+            }
+
+            renderResultsTable();
+            
+            // Enable export buttons
+            document.querySelector('button[onclick="exportResults()"]').disabled = false;
+            document.querySelector('button[onclick="generateAllSummaries()"]').disabled = false;
+        }
+
+        function updateProgress(current, total, text) {
+            const percentage = (current / total) * 100;
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = text;
+        }
+
+        // Summary and export functions
+        function generateCodeSummary(codeName) {
+            showAlert(`AI summary generation for "${codeName}" requires backend integration. This will analyze patterns across all articles.`, 'info');
+        }
+
+        function generateAllSummaries() {
+            showAlert('AI summary generation requires backend integration. This will create thematic analysis for each code across all articles.', 'info');
+        }
+
+        function exportResults() {
+            if (analysisResults.length === 0) {
+                showAlert('No results to export', 'warning');
+                return;
+            }
+
+            try {
+                const csv = convertToCSV();
+                downloadCSV(csv, 'analysis_results.csv');
+                showAlert('Results exported successfully!', 'success');
+            } catch (error) {
+                showAlert(`Export failed: ${error.message}`, 'error');
+            }
+        }
+
+        function convertToCSV() {
+            const headers = ['Article Name', 'Date', ...currentCodes.filter(c => !c.isPlaceholder).map(code => code.name)];
+            const rows = analysisResults.map(result => [
+                result.articleName,
+                result.date,
+                ...currentCodes.filter(c => !c.isPlaceholder).map(code => result.codesFound[code.name] || 0)
+            ]);
+            
+            // Add totals row
+            const totals = ['TOTAL', '', ...currentCodes.filter(c => !c.isPlaceholder).map(code => 
+                analysisResults.filter(result => result.codesFound[code.name] === 1).length
+            )];
+            
+            return [headers, ...rows, totals].map(row => 
+                row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Alert system
+        function showAlert(message, type) {
+            // Remove existing alerts
+            document.querySelectorAll('.alert').forEach(alert => {
+                if (!alert.classList.contains('demo-notice')) {
+                    alert.remove();
+                }
+            });
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.tab-nav'));
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlaceholderCodes();
+            loadUsageData();
+            loadConfiguration();
+            loadCodingScheme();
+            renderResultsTable(); // Show initial table with placeholders
+            renderCodes();
+            renderFileList();
+        });
+    </script>
+</body>
+</html>
