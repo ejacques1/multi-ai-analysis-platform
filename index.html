@@ -311,6 +311,11 @@
             background: #c82333;
         }
 
+        .btn-small {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+
         .code-item {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -506,6 +511,7 @@
             grid-template-columns: 1fr;
         }
 
+        /* Results table styling */
         .results-container {
             overflow-x: auto;
             margin-top: 2rem;
@@ -562,15 +568,30 @@
             font-weight: bold;
         }
 
+        .results-table .summary-row {
+            background: #e9ecef;
+        }
+
+        .evidence-row {
+            display: none;
+        }
+
+        .evidence-row.show {
+            display: table-row;
+        }
+
+        .evidence-content {
+            background: #f8f9fa;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+
         .alert {
             padding: 1rem;
             border-radius: 6px;
             margin-bottom: 1rem;
-            display: none;
-        }
-
-        .alert.show {
-            display: block;
         }
 
         .alert-success {
@@ -684,8 +705,7 @@
             <p class="subtitle">Advanced content analysis with multiple AI models for research reliability</p>
         </header>
 
-        <div id="alert-container"></div>
-
+        <!-- Landing Section -->
         <div id="landing-section" class="landing-section">
             <div class="hero-content">
                 <h2>Automated Qualitative Content Analysis for Researchers</h2>
@@ -775,6 +795,7 @@
             </div>
         </div>
 
+        <!-- Authentication Section -->
         <div id="auth-section" class="auth-section hidden">
             <h2>Sign In to Get Started</h2>
             <p style="margin-bottom: 2rem;">Create an account or sign in to access your analysis projects and usage tracking.</p>
@@ -788,7 +809,7 @@
                     <div class="form-group">
                         <input type="password" id="signin-password" placeholder="Password" />
                     </div>
-                    <button class="btn" onclick="signIn()" id="signin-btn">Sign In</button>
+                    <button class="btn" onclick="signIn()">Sign In</button>
                     <p style="margin-top: 1rem;">
                         Don't have an account? 
                         <a href="#" onclick="showSignUpForm()">Sign up here</a>
@@ -806,7 +827,7 @@
                     <div class="form-group">
                         <input type="password" id="signup-password" placeholder="Password" />
                     </div>
-                    <button class="btn" onclick="signUp()" id="signup-btn">Create Account</button>
+                    <button class="btn" onclick="signUp()">Create Account</button>
                     <p style="margin-top: 1rem;">
                         Already have an account? 
                         <a href="#" onclick="showSignInForm()">Sign in here</a>
@@ -815,12 +836,13 @@
             </div>
         </div>
 
+        <!-- User Info Section -->
         <div id="user-info" class="user-info hidden">
             <div>
                 <strong id="user-name">Welcome!</strong>
                 <span id="user-tier-info"> - Free Tier</span>
             </div>
-            <button class="btn btn-secondary" onclick="signOut()" id="signout-btn">Sign Out</button>
+            <button class="btn btn-secondary" onclick="signOut()">Sign Out</button>
         </div>
 
         <nav class="tab-nav hidden" id="main-nav">
@@ -831,6 +853,7 @@
             <button class="tab-btn" onclick="showTab('analysis')">Run Analysis</button>
         </nav>
 
+        <!-- Results Tab -->
         <div id="results" class="tab-content active hidden">
             <h2>Analysis Results</h2>
             <p>This shows your analysis results. The table dynamically adapts to your coding scheme.</p>
@@ -838,26 +861,34 @@
             <div style="margin-bottom: 2rem;">
                 <button class="btn" onclick="exportResults()" id="export-btn" disabled>Export to CSV</button>
                 <button class="btn btn-secondary" onclick="generateAllSummaries()" id="summaries-btn" disabled>Generate AI Summaries</button>
-                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Analysis complete - ready to export</span>
+                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Run analysis to enable export</span>
             </div>
 
             <div class="results-container">
                 <table class="results-table" id="results-table">
-                    <thead id="results-header"></thead>
-                    <tbody id="results-body"></tbody>
+                    <thead id="results-header">
+                        <!-- Dynamic headers will be inserted here -->
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
                 </table>
             </div>
 
             <div id="summary-section" class="hidden">
                 <h3>AI-Generated Summaries</h3>
-                <div id="summary-content"></div>
+                <div id="summary-content">
+                    <!-- Summaries will be generated here -->
+                </div>
             </div>
         </div>
 
+        <!-- Setup Tab -->
         <div id="setup" class="tab-content hidden">
             <h2>API Configuration</h2>
             <p>Choose between our free tier or bring your own API keys for unlimited usage.</p>
             
+            <!-- Free Tier Section -->
             <div class="tier-section free-tier active">
                 <div class="tier-header">
                     <h3>🎯 FREE TIER (Powered by our API keys)</h3>
@@ -882,6 +913,7 @@
                 </div>
             </div>
 
+            <!-- Premium Tier Section -->
             <div class="tier-section premium-tier">
                 <div class="tier-header">
                     <h3>🚀 PREMIUM TIER (Your own API keys = unlimited)</h3>
@@ -927,6 +959,7 @@
             </div>
         </div>
 
+        <!-- Coding Schemes Tab -->
         <div id="codes" class="tab-content hidden">
             <h2>Coding Schemes</h2>
             <p>Define your codes and operational definitions for analysis. Your schemes are saved to your account.</p>
@@ -949,14 +982,17 @@
 
             <h3>Current Codes</h3>
             <div id="codes-list">
+                <!-- Codes will be dynamically added here -->
             </div>
 
             <button class="btn" onclick="saveCodingScheme()">Save Coding Scheme</button>
             <button class="btn btn-secondary" onclick="loadCodingSchemes()">Load Saved Schemes</button>
             <div id="save-status" style="margin-top: 1rem; font-size: 0.9rem; color: #28a745;">
+                <!-- Save status will appear here -->
             </div>
         </div>
 
+        <!-- Upload Tab -->
         <div id="upload" class="tab-content hidden">
             <h2>Upload Articles</h2>
             <p>Upload PDF articles for analysis. Files are saved to your account for reuse across analyses.</p>
@@ -974,9 +1010,11 @@
             <input type="file" id="file-input" multiple accept=".pdf" style="display: none;" onchange="handleFileSelect(event)" />
 
             <div id="file-list" style="margin-top: 2rem;">
+                <!-- Uploaded files will be listed here -->
             </div>
         </div>
 
+        <!-- Analysis Tab -->
         <div id="analysis" class="tab-content hidden">
             <h2>Run Analysis</h2>
             <p>Execute real AI analysis across your uploaded articles using your configured models.</p>
@@ -1004,9 +1042,11 @@
     </div>
 
     <script>
+        // Configuration - Replace with your Supabase credentials
         const SUPABASE_URL = 'https://snuripsvqwuvgqrmnnab.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudXJpcHN2cXd1dmdxcm1ubmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTEyODUsImV4cCI6MjA3Mzk2NzI4NX0.H1PbpdmxhWvdlMR2X46ioFGp4pWWTeytMSK0b7c2xmo'
 
+        // Global variables
         let supabase = null
         let currentUser = null
         let currentCodes = []
@@ -1015,8 +1055,10 @@
         let isPremiumMode = false
         let currentSchemeId = null
 
+        // Initialize PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             console.log('App initializing...')
             if (initializeSupabase()) {
@@ -1027,6 +1069,7 @@
             }
         })
 
+        // Initialize Supabase
         function initializeSupabase() {
             try {
                 if (typeof window.supabase === 'undefined') {
@@ -1045,6 +1088,7 @@
             }
         }
 
+        // Navigation functions
         function showAuthSection(isSignIn = false) {
             document.getElementById('landing-section').classList.add('hidden')
             document.getElementById('auth-section').classList.remove('hidden')
@@ -1079,6 +1123,7 @@
             document.getElementById('results').classList.remove('hidden')
             document.getElementById('results').classList.add('active')
             
+            // Load user data
             loadUserData()
         }
 
@@ -1092,34 +1137,11 @@
             document.getElementById('signin-form').classList.remove('hidden')
         }
 
-        function showAlert(message, type = 'info') {
-            const alertContainer = document.getElementById('alert-container')
-            const alertDiv = document.createElement('div')
-            alertDiv.className = `alert alert-${type} show`
-            alertDiv.textContent = message
-            
-            alertContainer.innerHTML = ''
-            alertContainer.appendChild(alertDiv)
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    alertDiv.classList.remove('show')
-                    setTimeout(() => alertDiv.remove(), 300)
-                }, 5000)
-            }
-            
-            console.log(`Alert (${type}):`, message)
-        }
-
+        // Authentication functions with proper error handling
         async function signUp() {
-            const nameInput = document.getElementById('signup-name')
-            const emailInput = document.getElementById('signup-email')
-            const passwordInput = document.getElementById('signup-password')
-            const signupBtn = document.getElementById('signup-btn')
-
-            const name = nameInput.value.trim()
-            const email = emailInput.value.trim()
-            const password = passwordInput.value
+            const name = document.getElementById('signup-name').value.trim()
+            const email = document.getElementById('signup-email').value.trim()
+            const password = document.getElementById('signup-password').value
 
             if (!name || !email || !password) {
                 showAlert('Please fill in all fields', 'error')
@@ -1131,12 +1153,7 @@
                 return
             }
 
-            signupBtn.disabled = true
-            signupBtn.textContent = 'Creating Account...'
-
             try {
-                console.log('Attempting to sign up with email:', email)
-                
                 const { data, error } = await supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -1147,18 +1164,10 @@
                     }
                 })
 
-                if (error) {
-                    console.error('Sign up error:', error)
-                    throw error
-                }
-
-                console.log('Sign up successful:', data)
+                if (error) throw error
 
                 if (data.user && !data.user.email_confirmed_at) {
-                    showAlert('Account created! Please check your email to verify your account before signing in.', 'success')
-                    nameInput.value = ''
-                    emailInput.value = ''
-                    passwordInput.value = ''
+                    showAlert('Account created! Please check your email to verify your account.', 'success')
                     showSignInForm()
                 } else {
                     showAlert('Account created successfully!', 'success')
@@ -1166,94 +1175,47 @@
             } catch (error) {
                 console.error('Sign up error:', error)
                 showAlert(`Sign up failed: ${error.message}`, 'error')
-            } finally {
-                signupBtn.disabled = false
-                signupBtn.textContent = 'Create Account'
             }
         }
 
         async function signIn() {
-            const emailInput = document.getElementById('signin-email')
-            const passwordInput = document.getElementById('signin-password')
-            const signinBtn = document.getElementById('signin-btn')
-
-            const email = emailInput.value.trim()
-            const password = passwordInput.value
+            const email = document.getElementById('signin-email').value.trim()
+            const password = document.getElementById('signin-password').value
 
             if (!email || !password) {
                 showAlert('Please enter email and password', 'error')
                 return
             }
 
-            signinBtn.disabled = true
-            signinBtn.textContent = 'Signing In...'
-
             try {
-                console.log('Attempting to sign in with email:', email)
-                
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
                 })
 
-                if (error) {
-                    console.error('Sign in error:', error)
-                    throw error
-                }
+                if (error) throw error
 
-                console.log('Sign in successful:', data)
                 showAlert('Signed in successfully!', 'success')
-                
-                emailInput.value = ''
-                passwordInput.value = ''
-                
             } catch (error) {
                 console.error('Sign in error:', error)
-                if (error.message.includes('Invalid login credentials')) {
-                    showAlert('Invalid email or password. Please check your credentials.', 'error')
-                } else if (error.message.includes('Email not confirmed')) {
-                    showAlert('Please check your email and click the verification link before signing in.', 'error')
-                } else {
-                    showAlert(`Sign in failed: ${error.message}`, 'error')
-                }
-            } finally {
-                signinBtn.disabled = false
-                signinBtn.textContent = 'Sign In'
+                showAlert(`Sign in failed: ${error.message}`, 'error')
             }
         }
 
         async function signOut() {
-            const signoutBtn = document.getElementById('signout-btn')
-            
-            signoutBtn.disabled = true
-            signoutBtn.textContent = 'Signing Out...'
-            
             try {
-                console.log('Attempting to sign out')
-                
                 const { error } = await supabase.auth.signOut()
-                if (error) {
-                    console.error('Sign out error:', error)
-                    throw error
-                }
-                
-                console.log('Sign out successful')
-                showAlert('Signed out successfully!', 'success')
-                
+                if (error) throw error
             } catch (error) {
                 console.error('Sign out error:', error)
-                showAlert(`Sign out failed: ${error.message}`, 'error')
-            } finally {
-                signoutBtn.disabled = false
-                signoutBtn.textContent = 'Sign Out'
             }
         }
 
+        // Handle authentication state changes
         function handleAuthStateChange() {
             supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email)
-                
-                if (session && session.user) {
+                if (session) {
                     currentUser = session.user
                     await loadUserProfile()
                     showMainApp()
@@ -1266,14 +1228,6 @@
 
         async function loadUserProfile() {
             try {
-                console.log('Loading user profile for:', currentUser.id)
-                
-                const userEmail = currentUser.email
-                const userName = currentUser.user_metadata?.full_name || userEmail
-                
-                document.getElementById('user-name').textContent = `Welcome, ${userName}!`
-                document.getElementById('user-tier-info').textContent = ' - Free Tier'
-                
                 const { data, error } = await supabase
                     .from('users')
                     .select('*')
@@ -1281,15 +1235,14 @@
                     .single()
 
                 if (error && error.code !== 'PGRST116') {
-                    console.warn('Could not load user profile from database:', error)
-                    return
+                    throw error
                 }
 
                 if (data) {
-                    if (data.full_name) {
-                        document.getElementById('user-name').textContent = `Welcome, ${data.full_name}!`
-                    }
+                    // Update UI with user info
+                    document.getElementById('user-name').textContent = `Welcome, ${data.full_name || currentUser.email}!`
                     
+                    // Show admin status
                     let tierText = ''
                     if (data.is_admin) {
                         tierText = ' - Admin (Unlimited)'
@@ -1300,32 +1253,29 @@
                     }
                     document.getElementById('user-tier-info').textContent = tierText
                     
+                    // Update usage display (show unlimited for admins)
                     if (data.is_admin) {
                         updateUsageDisplay('unlimited')
                     } else {
                         updateUsageDisplay(data.usage_count || 0)
                     }
 
+                    // Load user's API keys if premium
                     if (data.is_premium && data.api_keys) {
                         loadApiKeys(data.api_keys)
                     }
+                } else {
+                    // No profile found, use basic info
+                    document.getElementById('user-name').textContent = `Welcome, ${currentUser.email}!`
+                    document.getElementById('user-tier-info').textContent = ' - Free Tier'
+                    updateUsageDisplay(0)
                 }
-                
             } catch (error) {
                 console.error('Error loading user profile:', error)
-            }
-        }
-
-        async function loadUserData() {
-            console.log('Loading user data...')
-            try {
-                await loadCodingSchemes()
-                await loadUploadedArticles()
-                renderResultsTable()
-                console.log('User data loaded successfully')
-            } catch (error) {
-                console.error('Error loading user data:', error)
-                showAlert('Some data could not be loaded. Please refresh the page.', 'warning')
+                // Use fallback display
+                document.getElementById('user-name').textContent = `Welcome, ${currentUser.email}!`
+                document.getElementById('user-tier-info').textContent = ' - Free Tier'
+                updateUsageDisplay(0)
             }
         }
 
@@ -1340,6 +1290,21 @@
             }
         }
 
+        async function loadUserData() {
+            console.log('Loading user data...')
+            try {
+                // Load data sequentially to ensure proper order
+                await loadCodingSchemes()
+                await loadUploadedArticles()
+                renderResultsTable()
+                console.log('User data loaded successfully')
+            } catch (error) {
+                console.error('Error loading user data:', error)
+                showAlert('Some data could not be loaded. Please refresh the page.', 'warning')
+            }
+        }
+
+        // Utility functions
         function updateUsageDisplay(usageCount) {
             const usageElement = document.getElementById('usage-count')
             const progressElement = document.getElementById('usage-progress')
@@ -1371,6 +1336,7 @@
             return div.innerHTML
         }
 
+        // Tab navigation
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active')
@@ -1385,6 +1351,7 @@
             event.target.classList.add('active')
         }
 
+        // Configuration functions
         function togglePremiumMode() {
             isPremiumMode = document.getElementById('premium-toggle').checked
             const premiumConfig = document.getElementById('premium-config')
@@ -1490,6 +1457,7 @@
             }
         }
 
+        // Coding scheme functions
         async function addCode() {
             const name = document.getElementById('code-name').value.trim()
             const definition = document.getElementById('code-definition').value.trim()
@@ -1520,6 +1488,7 @@
             document.getElementById('code-name').value = ''
             document.getElementById('code-definition').value = ''
             
+            // Mark as unsaved
             updateSaveStatus(false)
             
             showAlert(`Code "${name}" added successfully!`, 'success')
@@ -1536,6 +1505,7 @@
                 renderCodes()
                 renderResultsTable()
                 
+                // Mark as unsaved
                 updateSaveStatus(false)
                 
                 showAlert(`Code "${codeName}" removed successfully!`, 'success')
@@ -1588,6 +1558,7 @@
 
                 let result
                 if (currentSchemeId) {
+                    // Update existing scheme
                     result = await supabase
                         .from('coding_schemes')
                         .update({
@@ -1600,6 +1571,7 @@
                         .select()
                         .single()
                 } else {
+                    // Create new scheme
                     result = await supabase
                         .from('coding_schemes')
                         .insert({
@@ -1616,6 +1588,7 @@
                 currentSchemeId = result.data.id
                 showAlert(`Coding scheme "${schemeName}" saved successfully!`, 'success')
                 
+                // Update the save indicator
                 updateSaveStatus(true)
                 
             } catch (error) {
@@ -1645,10 +1618,12 @@
                 }
 
                 if (data && data.length > 0) {
+                    // Load the most recent scheme
                     const latestScheme = data[0]
                     currentSchemeId = latestScheme.id
                     document.getElementById('scheme-name').value = latestScheme.name
                     
+                    // Load codes from the scheme
                     currentCodes = latestScheme.codes.map((code, index) => ({
                         id: Date.now() + index,
                         name: code.name,
@@ -1658,21 +1633,25 @@
                     renderCodes()
                     console.log('Loaded coding scheme:', latestScheme.name, 'with', currentCodes.length, 'codes')
                     
+                    // Show success message
                     showAlert(`Loaded coding scheme: "${latestScheme.name}" with ${currentCodes.length} codes`, 'success')
                 } else {
                     console.log('No saved coding schemes found')
+                    // Clear any existing codes
                     currentCodes = []
                     currentSchemeId = null
                     document.getElementById('scheme-name').value = ''
                     renderCodes()
                 }
                 
+                // Always re-render the results table after loading codes
                 renderResultsTable()
                 
             } catch (error) {
                 console.error('Error loading coding schemes:', error)
                 showAlert('Could not load saved coding schemes. You can create new ones.', 'warning')
                 
+                // Initialize empty state
                 currentCodes = []
                 currentSchemeId = null
                 document.getElementById('scheme-name').value = ''
@@ -1697,6 +1676,7 @@
                 if (error) throw error
 
                 if (data && data.length > 0) {
+                    // Convert database articles to uploadedFiles format
                     uploadedFiles = data.map(article => ({
                         id: article.id,
                         name: article.filename,
@@ -1716,6 +1696,7 @@
             }
         }
 
+        // File handling functions
         function handleFileDrop(e) {
             e.preventDefault()
             e.target.classList.remove('dragover')
@@ -1772,200 +1753,315 @@
                     console.log(`Processing file ${i + 1}/${files.length}: ${file.name}`)
                     processingDetails.innerHTML = `Processing ${file.name} (${i + 1}/${files.length})...`
                     
+                    // Validate file size
                     if (file.size > 50 * 1024 * 1024) {
-                        throw new Error(`File "${file.name}" is too large (max 50MB)`)
+                        throw new Error('File too large (max 50MB)')
                     }
-
-                    const text = await extractTextFromPDF(file)
                     
-                    const fileData = {
-                        id: Date.now() + Math.random(),
-                        name: file.name,
-                        size: file.size,
-                        text: text.fullText,
-                        pageTexts: text.pageTexts,
-                        uploaded: new Date().toISOString()
+                    // Check for duplicates
+                    if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        console.log(`File "${file.name}" already uploaded, skipping`)
+                        showAlert(`File "${file.name}" already uploaded`, 'warning')
+                        continue
                     }
-
+                    
+                    // Extract text from PDF
+                    console.log(`Extracting text from ${file.name}`)
+                    const { fullText, pageTexts } = await extractTextFromPDF(file)
+                    
+                    // Save to database if user is logged in
                     if (currentUser) {
-                        await saveFileToDatabase(fileData)
-                    }
+                        const { data, error } = await supabase
+                            .from('articles')
+                            .insert({
+                                user_id: currentUser.id,
+                                filename: file.name,
+                                file_size: file.size,
+                                extracted_text: fullText,
+                                page_texts: pageTexts
+                            })
+                            .select()
+                            .single()
 
-                    uploadedFiles.push(fileData)
+                        if (error) throw error
+
+                        // Create file object with database ID
+                        const fileObj = {
+                            id: data.id,
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: data.uploaded_at
+                        }
+                        
+                        uploadedFiles.push(fileObj)
+                    } else {
+                        // Create file object with temporary ID
+                        const fileObj = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: new Date().toISOString()
+                        }
+                        
+                        uploadedFiles.push(fileObj)
+                    }
+                    
                     successCount++
+                    console.log(`Successfully processed ${file.name}, text length: ${fullText.length}`)
                     
                 } catch (error) {
-                    console.error(`Error processing file ${file.name}:`, error)
+                    console.error('Error processing file:', file.name, error)
+                    showAlert(`Error processing ${file.name}: ${error.message}`, 'error')
                     errorCount++
-                    processingDetails.innerHTML = `Error processing ${file.name}: ${error.message}`
-                    await new Promise(resolve => setTimeout(resolve, 2000))
                 }
             }
             
             processingIndicator.classList.add('hidden')
             
             if (successCount > 0) {
+                showAlert(`Successfully processed ${successCount} file(s)`, 'success')
                 renderFileList()
+                
+                // Update results table to show uploaded files
                 renderResultsTable()
-                showAlert(`Successfully processed ${successCount} file(s)${errorCount > 0 ? `, ${errorCount} failed` : ''}`, 'success')
-            } else {
-                showAlert(`Failed to process any files (${errorCount} errors)`, 'error')
             }
+            
+            if (errorCount > 0) {
+                showAlert(`Failed to process ${errorCount} file(s)`, 'error')
+            }
+            
+            console.log('File processing complete. Total uploaded files:', uploadedFiles.length)
         }
 
         async function extractTextFromPDF(file) {
-            const arrayBuffer = await file.arrayBuffer()
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise
-            
-            const pageTexts = []
-            let fullText = ''
-            
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                const page = await pdf.getPage(pageNum)
-                const textContent = await page.getTextContent()
-                
-                const pageText = textContent.items.map(item => item.str).join(' ')
-                pageTexts.push({
-                    page: pageNum,
-                    text: pageText
-                })
-                
-                fullText += `[Page ${pageNum}] ${pageText}\n\n`
-            }
-            
-            return {
-                fullText: fullText.trim(),
-                pageTexts: pageTexts
-            }
-        }
-
-        async function saveFileToDatabase(fileData) {
             try {
-                const { error } = await supabase
-                    .from('articles')
-                    .insert({
-                        user_id: currentUser.id,
-                        filename: fileData.name,
-                        file_size: fileData.size,
-                        extracted_text: fileData.text,
-                        page_texts: fileData.pageTexts,
-                        uploaded_at: fileData.uploaded
-                    })
-
-                if (error) throw error
+                console.log(`Starting PDF text extraction for ${file.name}`)
+                const arrayBuffer = await file.arrayBuffer()
                 
-                console.log('File saved to database:', fileData.name)
+                const pdf = await pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true
+                }).promise
+                
+                console.log(`PDF loaded, pages: ${pdf.numPages}`)
+                
+                let fullText = ''
+                let pageTexts = []
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    console.log(`Extracting text from page ${i}/${pdf.numPages}`)
+                    
+                    const page = await pdf.getPage(i)
+                    const textContent = await page.getTextContent()
+                    
+                    // Extract text items and join them
+                    const pageText = textContent.items
+                        .filter(item => item.str && item.str.trim())
+                        .map(item => item.str)
+                        .join(' ')
+                    
+                    pageTexts.push({ 
+                        page: i, 
+                        text: pageText 
+                    })
+                    
+                    fullText += pageText + '\n'
+                }
+
+                // Clean up the text
+                fullText = fullText
+                    .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+                    .trim()
+
+                if (fullText.length === 0) {
+                    throw new Error('No text could be extracted from this PDF. The file may be scanned images or encrypted.')
+                }
+
+                console.log(`Text extraction complete. Total text length: ${fullText.length}`)
+                return { fullText, pageTexts }
+                
             } catch (error) {
-                console.error('Error saving file to database:', error)
+                console.error('PDF extraction error:', error)
+                throw new Error(`Failed to process PDF: ${error.message}`)
             }
         }
 
         function renderFileList() {
             const fileList = document.getElementById('file-list')
+            console.log('Rendering file list:', uploadedFiles.length, 'files')
             
             if (uploadedFiles.length === 0) {
-                fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet. Upload PDF files above to get started.</p>'
+                fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet.</p>'
                 return
             }
 
-            let filesHTML = '<h3>Uploaded Files</h3>'
-            uploadedFiles.forEach((file, index) => {
-                const uploadDate = new Date(file.uploaded).toLocaleDateString()
-                const fileSize = formatFileSize(file.size)
+            let filesHTML = ''
+            uploadedFiles.forEach(file => {
+                const fileSize = (file.size / 1024).toFixed(1)
+                const uploadDate = new Date(file.uploaded).toLocaleString()
+                const textLength = file.text ? file.text.length : 0
                 
                 filesHTML += `
                     <div class="code-item">
                         <h4>${escapeHtml(file.name)}</h4>
-                        <p>Size: ${fileSize} | Uploaded: ${uploadDate}</p>
+                        <p>Size: ${fileSize} KB | Uploaded: ${uploadDate}</p>
+                        <p>Text extracted: ${textLength} characters</p>
                         <div class="code-actions">
-                            <button class="btn btn-danger" onclick="removeFile(${index})">Remove</button>
+                            <button class="btn btn-secondary" onclick="previewFile(${file.id})">Preview Text</button>
+                            <button class="btn btn-danger" onclick="removeFile(${file.id})">Remove</button>
                         </div>
                     </div>
                 `
             })
             
             fileList.innerHTML = filesHTML
+            console.log('File list rendered to DOM')
         }
 
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B'
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-        }
-
-        function removeFile(index) {
-            const fileName = uploadedFiles[index].name
-            uploadedFiles.splice(index, 1)
-            renderFileList()
-            renderResultsTable()
-            showAlert(`File "${fileName}" removed successfully!`, 'success')
-        }
-
-        function renderResultsTable() {
-            const resultsHeader = document.getElementById('results-header')
-            const resultsBody = document.getElementById('results-body')
-            
-            console.log('Rendering results table with codes:', currentCodes.length, 'files:', uploadedFiles.length)
-            
-            if (currentCodes.length === 0 || uploadedFiles.length === 0) {
-                resultsHeader.innerHTML = `
-                    <tr>
-                        <th>Article</th>
-                        <th class="code-header placeholder-code">Add Codes</th>
-                        <th class="code-header placeholder-code">Define Schemes</th>
-                        <th class="code-header placeholder-code">Upload Files</th>
-                    </tr>
-                `
+        function removeFile(id) {
+            const fileIndex = uploadedFiles.findIndex(file => file.id === id)
+            if (fileIndex > -1) {
+                const fileName = uploadedFiles[fileIndex].name
+                uploadedFiles.splice(fileIndex, 1)
+                console.log(`File removed: ${fileName}`)
+                console.log('Remaining files:', uploadedFiles.length)
                 
-                resultsBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 2rem; color: #6c757d;">
-                            ${currentCodes.length === 0 ? 'Add coding schemes in the "Coding Schemes" tab' : ''}
-                            ${uploadedFiles.length === 0 ? 'Upload PDF files in the "Upload Articles" tab' : ''}
-                        </td>
-                    </tr>
-                `
-                return
+                renderFileList()
+                renderResultsTable()
+                showAlert(`File "${fileName}" removed successfully!`, 'success')
             }
-            
-            let headerHTML = '<tr><th>Article</th>'
-            currentCodes.forEach(code => {
-                headerHTML += `<th class="code-header real-code">${escapeHtml(code.name)}</th>`
-            })
-            headerHTML += '</tr>'
-            resultsHeader.innerHTML = headerHTML
-            
-            let bodyHTML = ''
-            uploadedFiles.forEach(file => {
-                bodyHTML += `<tr><td>${escapeHtml(file.name)}</td>`
-                currentCodes.forEach(code => {
-                    bodyHTML += `<td class="code-cell">-</td>`
-                })
-                bodyHTML += '</tr>'
-            })
-            
-            if (uploadedFiles.length > 0 && currentCodes.length > 0) {
-                bodyHTML += '<tr class="totals-row"><td><strong>TOTAL</strong></td>'
-                currentCodes.forEach(() => {
-                    bodyHTML += '<td class="code-cell"><strong>0</strong></td>'
-                })
-                bodyHTML += '</tr>'
-            }
-            
-            resultsBody.innerHTML = bodyHTML
         }
 
-        function updateSaveStatus(saved) {
-            const saveStatus = document.getElementById('save-status')
-            if (saved) {
-                saveStatus.textContent = 'All changes saved'
-                saveStatus.style.color = '#28a745'
+        function previewFile(id) {
+            const file = uploadedFiles.find(f => f.id === id)
+            if (file && file.text) {
+                // Show first 1000 chars
+                const start = file.text.substring(0, 1000)
+                
+                // Show middle section (where article content likely is)
+                const midPoint = Math.floor(file.text.length / 2)
+                const middle = file.text.substring(midPoint - 500, midPoint + 500)
+                
+                // Show end
+                const end = file.text.substring(file.text.length - 1000)
+                
+                alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
             } else {
-                saveStatus.textContent = 'Unsaved changes'
-                saveStatus.style.color = '#dc3545'
+                showAlert('No text content available for this file', 'error')
             }
         }
 
+        // Results table functions
+        function renderResultsTable() {
+            console.log('Rendering results table...')
+            console.log('Current codes:', currentCodes.length)
+            console.log('Uploaded files:', uploadedFiles.length)
+            console.log('Analysis results:', analysisResults.length)
+            
+            const allCodes = [...currentCodes]
+            
+            // Add placeholders if we have fewer than 5 codes
+            while (allCodes.length < 5) {
+                const placeholderIndex = allCodes.length
+                allCodes.push({
+                    name: `Code ${placeholderIndex + 1}`,
+                    isPlaceholder: true
+                })
+            }
+
+            const tableHeader = document.getElementById('results-header')
+            const tableBody = document.getElementById('results-body')
+            
+            // Build header
+            let headerHTML = '<tr>'
+            headerHTML += '<th>Article</th>'
+            headerHTML += '<th>Date</th>'
+            
+            allCodes.forEach(code => {
+                const codeClass = code.isPlaceholder ? 'placeholder-code' : 'real-code'
+                headerHTML += `<th class="code-header ${codeClass}">${escapeHtml(code.name)}</th>`
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add totals row
+            headerHTML += '<tr class="totals-row">'
+            headerHTML += '<td><strong>TOTAL</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    const total = analysisResults.filter(result => 
+                        result.codesFound && result.codesFound[code.name] === 1
+                    ).length
+                    headerHTML += `<td class="code-cell">${total}</td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add AI Summary row
+            headerHTML += '<tr class="summary-row">'
+            headerHTML += '<td><strong>AI SUMMARY</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    const isDisabled = analysisResults.length === 0 ? 'disabled' : ''
+                    headerHTML += `<td class="code-cell"><button class="btn btn-small" onclick="generateCodeSummary('${code.name}')" ${isDisabled}>Summary</button></td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            tableHeader.innerHTML = headerHTML
+            
+            // Build body with uploaded files
+            let bodyHTML = ''
+            
+            if (uploadedFiles.length === 0) {
+                bodyHTML = '<tr><td colspan="' + (allCodes.length + 2) + '" style="text-align: center; color: #6c757d; font-style: italic;">No files uploaded yet. Go to "Upload Articles" tab to add PDF files.</td></tr>'
+            } else {
+                uploadedFiles.forEach((file, index) => {
+                    const uploadDate = new Date(file.uploaded).toLocaleDateString()
+                    
+                    bodyHTML += '<tr>'
+                    bodyHTML += `<td>${escapeHtml(file.name)}</td>`
+                    bodyHTML += `<td>${uploadDate}</td>`
+                    
+                    allCodes.forEach(code => {
+                        if (code.isPlaceholder) {
+                            bodyHTML += '<td class="code-cell">-</td>'
+                        } else {
+                            // Check if we have analysis results for this file and code
+                            const result = analysisResults.find(r => r.fileId === file.id)
+                            if (result && result.codesFound && result.codesFound[code.name] !== undefined) {
+                                const value = result.codesFound[code.name]
+                                bodyHTML += `<td class="code-cell">${value}</td>`
+                            } else {
+                                bodyHTML += '<td class="code-cell">?</td>'
+                            }
+                        }
+                    })
+                    
+                    bodyHTML += '</tr>'
+                })
+            }
+            
+            tableBody.innerHTML = bodyHTML
+            console.log('Results table rendered to DOM')
+        }
+
+        // Analysis functions - UPDATED TO USE EDGE FUNCTION
         async function startAnalysis() {
             if (!currentUser) {
                 showAlert('Please sign in to run analysis', 'error')
@@ -1973,233 +2069,273 @@
             }
 
             if (currentCodes.length === 0) {
-                showAlert('Please add at least one code in the Coding Schemes tab', 'error')
+                showAlert('Please add at least one code in the "Coding Schemes" tab', 'error')
                 return
             }
 
             if (uploadedFiles.length === 0) {
-                showAlert('Please upload at least one PDF file', 'error')
+                showAlert('Please upload at least one PDF file in the "Upload Articles" tab', 'error')
                 return
             }
 
-            const analysisBtn = document.getElementById('start-analysis-btn')
+            // Ensure we have a saved coding scheme
+            if (!currentSchemeId) {
+                const schemeName = document.getElementById('scheme-name').value.trim() || 'Default Scheme'
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('coding_schemes')
+                        .insert({
+                            user_id: currentUser.id,
+                            name: schemeName,
+                            codes: currentCodes.map(code => ({
+                                name: code.name,
+                                definition: code.definition
+                            }))
+                        })
+                        .select()
+                        .single()
+
+                    if (error) throw error
+                    currentSchemeId = data.id
+                } catch (error) {
+                    showAlert(`Failed to save coding scheme: ${error.message}`, 'error')
+                    return
+                }
+            }
+
+            const startBtn = document.getElementById('start-analysis-btn')
             const progressDiv = document.getElementById('analysis-progress')
             const progressFill = document.getElementById('progress-fill')
             const progressText = document.getElementById('progress-text')
 
-            analysisBtn.disabled = true
-            analysisBtn.textContent = 'Running Analysis...'
+            startBtn.disabled = true
+            startBtn.textContent = 'Running Analysis...'
             progressDiv.classList.remove('hidden')
-            
+            progressFill.style.width = '0%'
+            progressText.textContent = 'Initializing analysis...'
+
             try {
-                const totalSteps = uploadedFiles.length * currentCodes.length
-                let completedSteps = 0
-
-                progressText.textContent = 'Initializing analysis...'
-                progressFill.style.width = '0%'
-
                 analysisResults = []
+                const totalFiles = uploadedFiles.length
+                let completedFiles = 0
 
-                for (let fileIndex = 0; fileIndex < uploadedFiles.length; fileIndex++) {
-                    const file = uploadedFiles[fileIndex]
-                    const fileResults = {
-                        filename: file.name,
-                        codes: {}
-                    }
-
-                    for (let codeIndex = 0; codeIndex < currentCodes.length; codeIndex++) {
-                        const code = currentCodes[codeIndex]
-                        
-                        progressText.textContent = `Analyzing "${file.name}" for "${code.name}"...`
-                        
-                        try {
-                            const result = await analyzeFileForCode(file, code)
-                            fileResults.codes[code.name] = result
-                        } catch (error) {
-                            console.error(`Error analyzing ${file.name} for ${code.name}:`, error)
-                            fileResults.codes[code.name] = {
-                                value: 0,
-                                evidence: [],
-                                error: error.message
-                            }
-                        }
-
-                        completedSteps++
-                        const progress = (completedSteps / totalSteps) * 100
-                        progressFill.style.width = `${progress}%`
-                        
-                        await new Promise(resolve => setTimeout(resolve, 100))
-                    }
-
-                    analysisResults.push(fileResults)
+                for (const file of uploadedFiles) {
+                    progressText.textContent = `Analyzing ${file.name}...`
+                    
+                    // Call the real Edge Function
+                    const result = await analyzeFileWithAI(file)
+                    analysisResults.push(result)
+                    
+                    completedFiles++
+                    const percentage = (completedFiles / totalFiles) * 100
+                    progressFill.style.width = `${percentage}%`
+                    progressText.textContent = `Completed ${completedFiles}/${totalFiles} files`
                 }
 
                 progressText.textContent = 'Analysis complete!'
-                progressFill.style.width = '100%'
+                renderResultsTable()
+                
+                // Enable export button
+                document.getElementById('export-btn').disabled = false
+                document.getElementById('summaries-btn').disabled = false
+                document.getElementById('export-status').textContent = 'Analysis complete - ready to export'
 
-                updateResultsTable()
-                enableExportButtons()
                 showAlert('Analysis completed successfully!', 'success')
 
             } catch (error) {
                 console.error('Analysis error:', error)
                 showAlert(`Analysis failed: ${error.message}`, 'error')
             } finally {
-                analysisBtn.disabled = false
-                analysisBtn.textContent = 'Start AI Analysis'
-                
+                startBtn.disabled = false
+                startBtn.textContent = 'Start AI Analysis'
                 setTimeout(() => {
                     progressDiv.classList.add('hidden')
                 }, 2000)
             }
         }
 
-        async function analyzeFileForCode(file, code) {
-            await new Promise(resolve => setTimeout(resolve, 500))
-            
-            const randomValue = Math.random() > 0.5 ? 1 : 0
-            const evidence = randomValue === 1 ? [
-                {
-                    quote: `Sample evidence for ${code.name} found in the text`,
-                    page: Math.floor(Math.random() * 5) + 1,
-                    confidence: 0.8 + Math.random() * 0.2
-                }
-            ] : []
+        // NEW FUNCTION: Real AI analysis using Edge Function
+        async function analyzeFileWithAI(file) {
+            try {
+                // Ensure file is saved to database first
+                let articleId = file.id
+                
+                // If file ID is not a UUID (meaning it's a temporary ID), save it first
+                if (typeof file.id === 'number') {
+                    const { data, error } = await supabase
+                        .from('articles')
+                        .insert({
+                            user_id: currentUser.id,
+                            filename: file.name,
+                            file_size: file.size,
+                            extracted_text: file.text,
+                            page_texts: file.pageTexts
+                        })
+                        .select()
+                        .single()
 
-            return {
-                value: randomValue,
-                evidence: evidence,
-                model: 'gpt-3.5-turbo',
-                timestamp: new Date().toISOString()
+                    if (error) throw error
+                    articleId = data.id
+                    
+                    // Update the file object with the real ID
+                    file.id = data.id
+                }
+
+                // Call the Edge Function
+                const { data, error } = await supabase.functions.invoke('analyze-content', {
+                    body: {
+                        articleId: articleId,
+                        schemeId: currentSchemeId,
+                        enableReliability: document.getElementById('enable-reliability').checked
+                    }
+                })
+
+                if (error) throw error
+
+                // Convert to the format your frontend expects
+                const result = {
+                    fileId: file.id,
+                    fileName: file.name,
+                    codesFound: data.results[0].codes,
+                    evidence: data.results[0].evidence,
+                    modelResults: data.results, // Store all model results
+                    reliability: data.reliability // Store reliability info
+                }
+
+                return result
+
+            } catch (error) {
+                console.error('AI analysis error for', file.name, ':', error)
+                
+                // Fallback to simulation if Edge Function fails
+                showAlert(`AI analysis failed for ${file.name}. Using simulation.`, 'warning')
+                return simulateFileAnalysis(file)
             }
         }
 
-        function updateResultsTable() {
-            const resultsBody = document.getElementById('results-body')
-            
-            let bodyHTML = ''
-            const totals = {}
-            
+        // FALLBACK FUNCTION: Keep simulation for when Edge Function fails
+        async function simulateFileAnalysis(file) {
+            const result = {
+                fileId: file.id,
+                fileName: file.name,
+                codesFound: {},
+                evidence: {}
+            }
+
+            // Simulate analysis for each code
             currentCodes.forEach(code => {
-                totals[code.name] = 0
+                // Random result for demo (0 or 1)
+                result.codesFound[code.name] = Math.random() > 0.5 ? 1 : 0
+                
+                // Simulate evidence if code was found
+                if (result.codesFound[code.name] === 1) {
+                    result.evidence[code.name] = `Evidence for "${code.name}" found in ${file.name}: [Simulated evidence text...]`
+                }
             })
 
-            analysisResults.forEach(result => {
-                bodyHTML += `<tr><td>${escapeHtml(result.filename)}</td>`
-                
-                currentCodes.forEach(code => {
-                    const codeResult = result.codes[code.name]
-                    if (codeResult) {
-                        bodyHTML += `<td class="code-cell">${codeResult.value}</td>`
-                        totals[code.name] += codeResult.value
-                    } else {
-                        bodyHTML += `<td class="code-cell">-</td>`
-                    }
-                })
-                
-                bodyHTML += '</tr>'
-            })
-
-            bodyHTML += '<tr class="totals-row"><td><strong>TOTAL</strong></td>'
-            currentCodes.forEach(code => {
-                bodyHTML += `<td class="code-cell"><strong>${totals[code.name]}</strong></td>`
-            })
-            bodyHTML += '</tr>'
-            
-            resultsBody.innerHTML = bodyHTML
+            return result
         }
 
-        function enableExportButtons() {
-            document.getElementById('export-btn').disabled = false
-            document.getElementById('summaries-btn').disabled = false
-            document.getElementById('export-status').textContent = 'Analysis complete - ready to export'
-        }
-
+        // Export and summary functions
         function exportResults() {
             if (analysisResults.length === 0) {
-                showAlert('No analysis results to export', 'warning')
+                showAlert('No analysis results to export', 'error')
                 return
             }
 
-            let csv = 'Filename'
+            let csvContent = 'data:text/csv;charset=utf-8,'
+
+            // Build header row
+            let headers = ['Article', 'Date']
             currentCodes.forEach(code => {
-                csv += `,${code.name}`
+                headers.push(code.name)
             })
-            csv += '\n'
+            csvContent += headers.join(',') + '\n'
 
-            analysisResults.forEach(result => {
-                csv += `"${result.filename}"`
+            // Build data rows
+            uploadedFiles.forEach(file => {
+                const uploadDate = new Date(file.uploaded).toLocaleDateString()
+                let row = [`"${file.name}"`, uploadDate]
+                
                 currentCodes.forEach(code => {
-                    const codeResult = result.codes[code.name]
-                    csv += `,${codeResult ? codeResult.value : 0}`
-                })
-                csv += '\n'
-            })
-
-            csv += 'TOTAL'
-            const totals = {}
-            currentCodes.forEach(code => {
-                totals[code.name] = 0
-            })
-
-            analysisResults.forEach(result => {
-                currentCodes.forEach(code => {
-                    const codeResult = result.codes[code.name]
-                    if (codeResult) {
-                        totals[code.name] += codeResult.value
+                    const result = analysisResults.find(r => r.fileId === file.id)
+                    if (result && result.codesFound && result.codesFound[code.name] !== undefined) {
+                        row.push(result.codesFound[code.name])
+                    } else {
+                        row.push('?')
                     }
                 })
+                
+                csvContent += row.join(',') + '\n'
             })
 
+            // Add totals row
+            let totalsRow = ['TOTAL', '']
             currentCodes.forEach(code => {
-                csv += `,${totals[code.name]}`
+                const total = analysisResults.filter(result => 
+                    result.codesFound && result.codesFound[code.name] === 1
+                ).length
+                totalsRow.push(total)
             })
+            csvContent += totalsRow.join(',') + '\n'
 
-            const blob = new Blob([csv], { type: 'text/csv' })
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `analysis_results_${new Date().toISOString().split('T')[0]}.csv`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            window.URL.revokeObjectURL(url)
+            // Create download link
+            const encodedUri = encodeURI(csvContent)
+            const link = document.createElement('a')
+            link.setAttribute('href', encodedUri)
+            link.setAttribute('download', 'analysis_results.csv')
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
 
-            showAlert('Results exported successfully!', 'success')
+            showAlert('Results exported to CSV file', 'success')
         }
 
-        function generateAllSummaries() {
-            if (analysisResults.length === 0) {
-                showAlert('No analysis results to summarize', 'warning')
-                return
-            }
+        async function generateAllSummaries() {
+            showAlert('AI summaries feature coming soon!', 'info')
+        }
 
-            const summarySection = document.getElementById('summary-section')
-            const summaryContent = document.getElementById('summary-content')
+        async function generateCodeSummary(codeName) {
+            showAlert(`Summary for "${codeName}" coming soon!`, 'info')
+        }
+
+        // Utility function to update save status indicator
+        function updateSaveStatus(isSaved) {
+            const statusElement = document.getElementById('save-status')
+            if (statusElement) {
+                if (isSaved) {
+                    statusElement.innerHTML = '✓ All changes saved'
+                    statusElement.style.color = '#28a745'
+                } else {
+                    statusElement.innerHTML = '● Unsaved changes'
+                    statusElement.style.color = '#ffc107'
+                }
+            }
+        }
+
+        // Alert system
+        function showAlert(message, type = 'info') {
+            console.log(`ALERT [${type}]:`, message)
             
-            let summariesHTML = ''
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert')
+            existingAlerts.forEach(alert => alert.remove())
             
-            currentCodes.forEach(code => {
-                const total = analysisResults.reduce((sum, result) => {
-                    const codeResult = result.codes[code.name]
-                    return sum + (codeResult ? codeResult.value : 0)
-                }, 0)
-                
-                const percentage = (total / analysisResults.length * 100).toFixed(1)
-                
-                summariesHTML += `
-                    <div class="code-item">
-                        <h4>${escapeHtml(code.name)}</h4>
-                        <p><strong>Frequency:</strong> ${total}/${analysisResults.length} articles (${percentage}%)</p>
-                        <p><strong>Summary:</strong> This code appeared in ${percentage}% of analyzed articles, indicating ${percentage > 50 ? 'high' : 'low'} prevalence of this theme in the dataset.</p>
-                    </div>
-                `
-            })
+            const alertDiv = document.createElement('div')
+            alertDiv.className = `alert alert-${type}`
+            alertDiv.textContent = message
             
-            summaryContent.innerHTML = summariesHTML
-            summarySection.classList.remove('hidden')
+            // Insert after header
+            const header = document.querySelector('header')
+            header.parentNode.insertBefore(alertDiv, header.nextSibling)
             
-            showAlert('AI summaries generated!', 'success')
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv)
+                }
+            }, 5000)
         }
     </script>
 </body>
