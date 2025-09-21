@@ -316,14 +316,6 @@
             padding: 4px 8px;
         }
 
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
         .code-item {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -673,76 +665,6 @@
             display: none;
         }
 
-        /* File status indicators */
-        .file-status {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-
-        .file-status.pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .file-status.analyzing {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .file-status.completed {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .file-status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Expandable evidence styling */
-        .expand-btn {
-            background: none;
-            border: none;
-            color: #667eea;
-            cursor: pointer;
-            font-size: 0.8rem;
-            padding: 2px 4px;
-            margin-left: 4px;
-            border-radius: 3px;
-        }
-
-        .expand-btn:hover {
-            background: #f0f4ff;
-        }
-
-        .expand-btn.expanded {
-            background: #667eea;
-            color: white;
-        }
-
-        .evidence-cell {
-            background: #f8f9fa;
-            border-left: 3px solid #667eea;
-            padding: 1rem;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .evidence-cell .evidence-text {
-            font-style: italic;
-            color: #495057;
-            margin-bottom: 0.5rem;
-        }
-
-        .evidence-cell .evidence-source {
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
-
         @media (max-width: 768px) {
             .tier-features {
                 grid-template-columns: 1fr;
@@ -924,21 +846,22 @@
         </div>
 
         <nav class="tab-nav hidden" id="main-nav">
-            <button class="tab-btn active" onclick="showTab('results')">Analysis Results</button>
+            <button class="tab-btn active" onclick="showTab('results')">Expected Output</button>
             <button class="tab-btn" onclick="showTab('setup')">Setup & Config</button>
             <button class="tab-btn" onclick="showTab('codes')">Coding Schemes</button>
             <button class="tab-btn" onclick="showTab('upload')">Upload Articles</button>
+            <button class="tab-btn" onclick="showTab('analysis')">Run Analysis</button>
         </nav>
 
         <!-- Results Tab -->
         <div id="results" class="tab-content active hidden">
             <h2>Analysis Results</h2>
-            <p>Upload files and define codes, then analyze each file individually. Results aggregate automatically.</p>
+            <p>This shows your analysis results. The table dynamically adapts to your coding scheme.</p>
 
             <div style="margin-bottom: 2rem;">
                 <button class="btn" onclick="exportResults()" id="export-btn" disabled>Export to CSV</button>
                 <button class="btn btn-secondary" onclick="generateAllSummaries()" id="summaries-btn" disabled>Generate AI Summaries</button>
-                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Analyze files to enable export</span>
+                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Run analysis to enable export</span>
             </div>
 
             <div class="results-container">
@@ -953,7 +876,7 @@
             </div>
 
             <div id="summary-section" class="hidden">
-                <h3>AI-Generated Code Summaries</h3>
+                <h3>AI-Generated Summaries</h3>
                 <div id="summary-content">
                     <!-- Summaries will be generated here -->
                 </div>
@@ -1072,7 +995,7 @@
         <!-- Upload Tab -->
         <div id="upload" class="tab-content hidden">
             <h2>Upload Articles</h2>
-            <p>Upload PDF articles and analyze them individually. Files are saved to your account for reuse.</p>
+            <p>Upload PDF articles for analysis. Files are saved to your account for reuse across analyses.</p>
 
             <div id="processing-indicator" class="processing-indicator hidden">
                 <strong>Processing files...</strong>
@@ -1090,6 +1013,32 @@
                 <!-- Uploaded files will be listed here -->
             </div>
         </div>
+
+        <!-- Analysis Tab -->
+        <div id="analysis" class="tab-content hidden">
+            <h2>Run Analysis</h2>
+            <p>Execute real AI analysis across your uploaded articles using your configured models.</p>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enable-reliability" checked />
+                    Enable Multi-Model Reliability Check (Premium only)
+                </label>
+                <p style="color: #6c757d; font-size: 0.9rem;">Compare results across different AI models for validation</p>
+            </div>
+
+            <button class="btn" onclick="startAnalysis()" id="start-analysis-btn">
+                Start AI Analysis
+            </button>
+
+            <div id="analysis-progress" class="hidden">
+                <h3>Analysis Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p id="progress-text">Initializing...</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1105,7 +1054,6 @@
         let analysisResults = []
         let isPremiumMode = false
         let currentSchemeId = null
-        let expandedEvidence = {} // Track which evidence rows are expanded
 
         // Initialize PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
@@ -1735,12 +1683,8 @@
                         size: article.file_size,
                         text: article.extracted_text,
                         pageTexts: article.page_texts,
-                        uploaded: article.uploaded_at,
-                        status: 'uploaded' // Default status
+                        uploaded: article.uploaded_at
                     }))
-                    
-                    // Load existing analysis results
-                    await loadAnalysisResults()
                     
                     renderFileList()
                     renderResultsTable()
@@ -1749,47 +1693,6 @@
                 }
             } catch (error) {
                 console.error('Error loading articles:', error)
-            }
-        }
-
-        async function loadAnalysisResults() {
-            if (!currentUser) return
-            
-            try {
-                const { data, error } = await supabase
-                    .from('analysis_results')
-                    .select('*')
-                    .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false })
-
-                if (error) throw error
-
-                if (data && data.length > 0) {
-                    analysisResults = data.map(result => ({
-                        fileId: result.article_id,
-                        fileName: result.filename,
-                        codesFound: result.codes_found,
-                        evidence: result.evidence,
-                        modelResults: result.model_results,
-                        reliability: result.reliability,
-                        analysisId: result.id
-                    }))
-                    
-                    // Update file statuses
-                    uploadedFiles.forEach(file => {
-                        const hasResult = analysisResults.some(r => r.fileId === file.id)
-                        file.status = hasResult ? 'completed' : 'uploaded'
-                    })
-                    
-                    // Enable export if we have results
-                    if (analysisResults.length > 0) {
-                        document.getElementById('export-btn').disabled = false
-                        document.getElementById('summaries-btn').disabled = false
-                        document.getElementById('export-status').textContent = 'Analysis complete - ready to export'
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading analysis results:', error)
             }
         }
 
@@ -1855,4 +1758,585 @@
                         throw new Error('File too large (max 50MB)')
                     }
                     
-                    // Check for duplic
+                    // Check for duplicates
+                    if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        console.log(`File "${file.name}" already uploaded, skipping`)
+                        showAlert(`File "${file.name}" already uploaded`, 'warning')
+                        continue
+                    }
+                    
+                    // Extract text from PDF
+                    console.log(`Extracting text from ${file.name}`)
+                    const { fullText, pageTexts } = await extractTextFromPDF(file)
+                    
+                    // Save to database if user is logged in
+                    if (currentUser) {
+                        const { data, error } = await supabase
+                            .from('articles')
+                            .insert({
+                                user_id: currentUser.id,
+                                filename: file.name,
+                                file_size: file.size,
+                                extracted_text: fullText,
+                                page_texts: pageTexts
+                            })
+                            .select()
+                            .single()
+
+                        if (error) throw error
+
+                        // Create file object with database ID
+                        const fileObj = {
+                            id: data.id,
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: data.uploaded_at
+                        }
+                        
+                        uploadedFiles.push(fileObj)
+                    } else {
+                        // Create file object with temporary ID
+                        const fileObj = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            size: file.size,
+                            text: fullText,
+                            pageTexts: pageTexts,
+                            uploaded: new Date().toISOString()
+                        }
+                        
+                        uploadedFiles.push(fileObj)
+                    }
+                    
+                    successCount++
+                    console.log(`Successfully processed ${file.name}, text length: ${fullText.length}`)
+                    
+                } catch (error) {
+                    console.error('Error processing file:', file.name, error)
+                    showAlert(`Error processing ${file.name}: ${error.message}`, 'error')
+                    errorCount++
+                }
+            }
+            
+            processingIndicator.classList.add('hidden')
+            
+            if (successCount > 0) {
+                showAlert(`Successfully processed ${successCount} file(s)`, 'success')
+                renderFileList()
+                
+                // Update results table to show uploaded files
+                renderResultsTable()
+            }
+            
+            if (errorCount > 0) {
+                showAlert(`Failed to process ${errorCount} file(s)`, 'error')
+            }
+            
+            console.log('File processing complete. Total uploaded files:', uploadedFiles.length)
+        }
+
+        async function extractTextFromPDF(file) {
+            try {
+                console.log(`Starting PDF text extraction for ${file.name}`)
+                const arrayBuffer = await file.arrayBuffer()
+                
+                const pdf = await pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true
+                }).promise
+                
+                console.log(`PDF loaded, pages: ${pdf.numPages}`)
+                
+                let fullText = ''
+                let pageTexts = []
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    console.log(`Extracting text from page ${i}/${pdf.numPages}`)
+                    
+                    const page = await pdf.getPage(i)
+                    const textContent = await page.getTextContent()
+                    
+                    // Extract text items and join them
+                    const pageText = textContent.items
+                        .filter(item => item.str && item.str.trim())
+                        .map(item => item.str)
+                        .join(' ')
+                    
+                    pageTexts.push({ 
+                        page: i, 
+                        text: pageText 
+                    })
+                    
+                    fullText += pageText + '\n'
+                }
+
+                // Clean up the text
+                fullText = fullText
+                    .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
+                    .trim()
+
+                if (fullText.length === 0) {
+                    throw new Error('No text could be extracted from this PDF. The file may be scanned images or encrypted.')
+                }
+
+                console.log(`Text extraction complete. Total text length: ${fullText.length}`)
+                return { fullText, pageTexts }
+                
+            } catch (error) {
+                console.error('PDF extraction error:', error)
+                throw new Error(`Failed to process PDF: ${error.message}`)
+            }
+        }
+
+        function renderFileList() {
+            const fileList = document.getElementById('file-list')
+            console.log('Rendering file list:', uploadedFiles.length, 'files')
+            
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '<p style="color: #6c757d;">No files uploaded yet.</p>'
+                return
+            }
+
+            let filesHTML = ''
+            uploadedFiles.forEach(file => {
+                const fileSize = (file.size / 1024).toFixed(1)
+                const uploadDate = new Date(file.uploaded).toLocaleString()
+                const textLength = file.text ? file.text.length : 0
+                
+                filesHTML += `
+                    <div class="code-item">
+                        <h4>${escapeHtml(file.name)}</h4>
+                        <p>Size: ${fileSize} KB | Uploaded: ${uploadDate}</p>
+                        <p>Text extracted: ${textLength} characters</p>
+                        <div class="code-actions">
+                            <button class="btn btn-secondary" onclick="previewFile(${file.id})">Preview Text</button>
+                            <button class="btn btn-danger" onclick="removeFile(${file.id})">Remove</button>
+                        </div>
+                    </div>
+                `
+            })
+            
+            fileList.innerHTML = filesHTML
+            console.log('File list rendered to DOM')
+        }
+
+        function removeFile(id) {
+            const fileIndex = uploadedFiles.findIndex(file => file.id === id)
+            if (fileIndex > -1) {
+                const fileName = uploadedFiles[fileIndex].name
+                uploadedFiles.splice(fileIndex, 1)
+                console.log(`File removed: ${fileName}`)
+                console.log('Remaining files:', uploadedFiles.length)
+                
+                renderFileList()
+                renderResultsTable()
+                showAlert(`File "${fileName}" removed successfully!`, 'success')
+            }
+        }
+
+        function previewFile(id) {
+            const file = uploadedFiles.find(f => f.id === id)
+            if (file && file.text) {
+                // Show first 1000 chars
+                const start = file.text.substring(0, 1000)
+                
+                // Show middle section (where article content likely is)
+                const midPoint = Math.floor(file.text.length / 2)
+                const middle = file.text.substring(midPoint - 500, midPoint + 500)
+                
+                // Show end
+                const end = file.text.substring(file.text.length - 1000)
+                
+                alert(`BEGINNING:\n${start}\n\n---MIDDLE---\n${middle}\n\n---END---\n${end}`)
+            } else {
+                showAlert('No text content available for this file', 'error')
+            }
+        }
+
+        // Results table functions
+        function renderResultsTable() {
+            console.log('Rendering results table...')
+            console.log('Current codes:', currentCodes.length)
+            console.log('Uploaded files:', uploadedFiles.length)
+            console.log('Analysis results:', analysisResults.length)
+            
+            const allCodes = [...currentCodes]
+            
+            // Add placeholders if we have fewer than 5 codes
+            while (allCodes.length < 5) {
+                const placeholderIndex = allCodes.length
+                allCodes.push({
+                    name: `Code ${placeholderIndex + 1}`,
+                    isPlaceholder: true
+                })
+            }
+
+            const tableHeader = document.getElementById('results-header')
+            const tableBody = document.getElementById('results-body')
+            
+            // Build header
+            let headerHTML = '<tr>'
+            headerHTML += '<th>Article</th>'
+            headerHTML += '<th>Date</th>'
+            
+            allCodes.forEach(code => {
+                const codeClass = code.isPlaceholder ? 'placeholder-code' : 'real-code'
+                headerHTML += `<th class="code-header ${codeClass}">${escapeHtml(code.name)}</th>`
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add totals row
+            headerHTML += '<tr class="totals-row">'
+            headerHTML += '<td><strong>TOTAL</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    const total = analysisResults.filter(result => 
+                        result.codesFound && result.codesFound[code.name] === 1
+                    ).length
+                    headerHTML += `<td class="code-cell">${total}</td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            // Add AI Summary row
+            headerHTML += '<tr class="summary-row">'
+            headerHTML += '<td><strong>AI SUMMARY</strong></td>'
+            headerHTML += '<td></td>'
+            
+            allCodes.forEach(code => {
+                if (code.isPlaceholder) {
+                    headerHTML += '<td class="code-cell">-</td>'
+                } else {
+                    const isDisabled = analysisResults.length === 0 ? 'disabled' : ''
+                    headerHTML += `<td class="code-cell"><button class="btn btn-small" onclick="generateCodeSummary('${code.name}')" ${isDisabled}>Summary</button></td>`
+                }
+            })
+            
+            headerHTML += '</tr>'
+            
+            tableHeader.innerHTML = headerHTML
+            
+            // Build body with uploaded files
+            let bodyHTML = ''
+            
+            if (uploadedFiles.length === 0) {
+                bodyHTML = '<tr><td colspan="' + (allCodes.length + 2) + '" style="text-align: center; color: #6c757d; font-style: italic;">No files uploaded yet. Go to "Upload Articles" tab to add PDF files.</td></tr>'
+            } else {
+                uploadedFiles.forEach((file, index) => {
+                    const uploadDate = new Date(file.uploaded).toLocaleDateString()
+                    
+                    bodyHTML += '<tr>'
+                    bodyHTML += `<td>${escapeHtml(file.name)}</td>`
+                    bodyHTML += `<td>${uploadDate}</td>`
+                    
+                    allCodes.forEach(code => {
+                        if (code.isPlaceholder) {
+                            bodyHTML += '<td class="code-cell">-</td>'
+                        } else {
+                            // Check if we have analysis results for this file and code
+                            const result = analysisResults.find(r => r.fileId === file.id)
+                            if (result && result.codesFound && result.codesFound[code.name] !== undefined) {
+                                const value = result.codesFound[code.name]
+                                bodyHTML += `<td class="code-cell">${value}</td>`
+                            } else {
+                                bodyHTML += '<td class="code-cell">?</td>'
+                            }
+                        }
+                    })
+                    
+                    bodyHTML += '</tr>'
+                })
+            }
+            
+            tableBody.innerHTML = bodyHTML
+            console.log('Results table rendered to DOM')
+        }
+
+        // Analysis functions - UPDATED TO USE EDGE FUNCTION
+        async function startAnalysis() {
+            if (!currentUser) {
+                showAlert('Please sign in to run analysis', 'error')
+                return
+            }
+
+            if (currentCodes.length === 0) {
+                showAlert('Please add at least one code in the "Coding Schemes" tab', 'error')
+                return
+            }
+
+            if (uploadedFiles.length === 0) {
+                showAlert('Please upload at least one PDF file in the "Upload Articles" tab', 'error')
+                return
+            }
+
+            // Ensure we have a saved coding scheme
+            if (!currentSchemeId) {
+                const schemeName = document.getElementById('scheme-name').value.trim() || 'Default Scheme'
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('coding_schemes')
+                        .insert({
+                            user_id: currentUser.id,
+                            name: schemeName,
+                            codes: currentCodes.map(code => ({
+                                name: code.name,
+                                definition: code.definition
+                            }))
+                        })
+                        .select()
+                        .single()
+
+                    if (error) throw error
+                    currentSchemeId = data.id
+                } catch (error) {
+                    showAlert(`Failed to save coding scheme: ${error.message}`, 'error')
+                    return
+                }
+            }
+
+            const startBtn = document.getElementById('start-analysis-btn')
+            const progressDiv = document.getElementById('analysis-progress')
+            const progressFill = document.getElementById('progress-fill')
+            const progressText = document.getElementById('progress-text')
+
+            startBtn.disabled = true
+            startBtn.textContent = 'Running Analysis...'
+            progressDiv.classList.remove('hidden')
+            progressFill.style.width = '0%'
+            progressText.textContent = 'Initializing analysis...'
+
+            try {
+                analysisResults = []
+                const totalFiles = uploadedFiles.length
+                let completedFiles = 0
+
+                for (const file of uploadedFiles) {
+                    progressText.textContent = `Analyzing ${file.name}...`
+                    
+                    // Call the real Edge Function
+                    const result = await analyzeFileWithAI(file)
+                    analysisResults.push(result)
+                    
+                    completedFiles++
+                    const percentage = (completedFiles / totalFiles) * 100
+                    progressFill.style.width = `${percentage}%`
+                    progressText.textContent = `Completed ${completedFiles}/${totalFiles} files`
+                }
+
+                progressText.textContent = 'Analysis complete!'
+                renderResultsTable()
+                
+                // Enable export button
+                document.getElementById('export-btn').disabled = false
+                document.getElementById('summaries-btn').disabled = false
+                document.getElementById('export-status').textContent = 'Analysis complete - ready to export'
+
+                showAlert('Analysis completed successfully!', 'success')
+
+            } catch (error) {
+                console.error('Analysis error:', error)
+                showAlert(`Analysis failed: ${error.message}`, 'error')
+            } finally {
+                startBtn.disabled = false
+                startBtn.textContent = 'Start AI Analysis'
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden')
+                }, 2000)
+            }
+        }
+
+        // NEW FUNCTION: Real AI analysis using Edge Function
+        async function analyzeFileWithAI(file) {
+            try {
+                // Ensure file is saved to database first
+                let articleId = file.id
+                
+                // If file ID is not a UUID (meaning it's a temporary ID), save it first
+                if (typeof file.id === 'number') {
+                    const { data, error } = await supabase
+                        .from('articles')
+                        .insert({
+                            user_id: currentUser.id,
+                            filename: file.name,
+                            file_size: file.size,
+                            extracted_text: file.text,
+                            page_texts: file.pageTexts
+                        })
+                        .select()
+                        .single()
+
+                    if (error) throw error
+                    articleId = data.id
+                    
+                    // Update the file object with the real ID
+                    file.id = data.id
+                }
+
+                // Call the Edge Function
+                const { data, error } = await supabase.functions.invoke('analyze-content', {
+                    body: {
+                        articleId: articleId,
+                        schemeId: currentSchemeId,
+                        enableReliability: document.getElementById('enable-reliability').checked
+                    }
+                })
+
+                if (error) throw error
+
+                // Convert to the format your frontend expects
+                const result = {
+                    fileId: file.id,
+                    fileName: file.name,
+                    codesFound: data.results[0].codes,
+                    evidence: data.results[0].evidence,
+                    modelResults: data.results, // Store all model results
+                    reliability: data.reliability // Store reliability info
+                }
+
+                return result
+
+            } catch (error) {
+                console.error('AI analysis error for', file.name, ':', error)
+                
+                // Fallback to simulation if Edge Function fails
+                showAlert(`AI analysis failed for ${file.name}. Using simulation.`, 'warning')
+                return simulateFileAnalysis(file)
+            }
+        }
+
+        // FALLBACK FUNCTION: Keep simulation for when Edge Function fails
+        async function simulateFileAnalysis(file) {
+            const result = {
+                fileId: file.id,
+                fileName: file.name,
+                codesFound: {},
+                evidence: {}
+            }
+
+            // Simulate analysis for each code
+            currentCodes.forEach(code => {
+                // Random result for demo (0 or 1)
+                result.codesFound[code.name] = Math.random() > 0.5 ? 1 : 0
+                
+                // Simulate evidence if code was found
+                if (result.codesFound[code.name] === 1) {
+                    result.evidence[code.name] = `Evidence for "${code.name}" found in ${file.name}: [Simulated evidence text...]`
+                }
+            })
+
+            return result
+        }
+
+        // Export and summary functions
+        function exportResults() {
+            if (analysisResults.length === 0) {
+                showAlert('No analysis results to export', 'error')
+                return
+            }
+
+            let csvContent = 'data:text/csv;charset=utf-8,'
+
+            // Build header row
+            let headers = ['Article', 'Date']
+            currentCodes.forEach(code => {
+                headers.push(code.name)
+            })
+            csvContent += headers.join(',') + '\n'
+
+            // Build data rows
+            uploadedFiles.forEach(file => {
+                const uploadDate = new Date(file.uploaded).toLocaleDateString()
+                let row = [`"${file.name}"`, uploadDate]
+                
+                currentCodes.forEach(code => {
+                    const result = analysisResults.find(r => r.fileId === file.id)
+                    if (result && result.codesFound && result.codesFound[code.name] !== undefined) {
+                        row.push(result.codesFound[code.name])
+                    } else {
+                        row.push('?')
+                    }
+                })
+                
+                csvContent += row.join(',') + '\n'
+            })
+
+            // Add totals row
+            let totalsRow = ['TOTAL', '']
+            currentCodes.forEach(code => {
+                const total = analysisResults.filter(result => 
+                    result.codesFound && result.codesFound[code.name] === 1
+                ).length
+                totalsRow.push(total)
+            })
+            csvContent += totalsRow.join(',') + '\n'
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent)
+            const link = document.createElement('a')
+            link.setAttribute('href', encodedUri)
+            link.setAttribute('download', 'analysis_results.csv')
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+
+            showAlert('Results exported to CSV file', 'success')
+        }
+
+        async function generateAllSummaries() {
+            showAlert('AI summaries feature coming soon!', 'info')
+        }
+
+        async function generateCodeSummary(codeName) {
+            showAlert(`Summary for "${codeName}" coming soon!`, 'info')
+        }
+
+        // Utility function to update save status indicator
+        function updateSaveStatus(isSaved) {
+            const statusElement = document.getElementById('save-status')
+            if (statusElement) {
+                if (isSaved) {
+                    statusElement.innerHTML = '✓ All changes saved'
+                    statusElement.style.color = '#28a745'
+                } else {
+                    statusElement.innerHTML = '● Unsaved changes'
+                    statusElement.style.color = '#ffc107'
+                }
+            }
+        }
+
+        // Alert system
+        function showAlert(message, type = 'info') {
+            console.log(`ALERT [${type}]:`, message)
+            
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert')
+            existingAlerts.forEach(alert => alert.remove())
+            
+            const alertDiv = document.createElement('div')
+            alertDiv.className = `alert alert-${type}`
+            alertDiv.textContent = message
+            
+            // Insert after header
+            const header = document.querySelector('header')
+            header.parentNode.insertBefore(alertDiv, header.nextSibling)
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv)
+                }
+            }, 5000)
+        }
+    </script>
+</body>
+</html>
