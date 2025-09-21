@@ -572,6 +572,22 @@
             background: #e9ecef;
         }
 
+        .evidence-row {
+            display: none;
+        }
+
+        .evidence-row.show {
+            display: table-row;
+        }
+
+        .evidence-content {
+            background: #f8f9fa;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+
         /* NEW: Evidence display styling */
         .clickable-cell {
             cursor: pointer;
@@ -594,7 +610,7 @@
             background-color: rgba(0,0,0,0.5);
         }
 
-        .evidence-content {
+        .evidence-modal-content {
             background: white;
             margin: 5% auto;
             padding: 20px;
@@ -650,14 +666,6 @@
             font-style: normal;
             margin-top: 10px;
             display: block;
-        }
-
-        .evidence-row {
-            display: none;
-        }
-
-        .evidence-row.show {
-            display: table-row;
         }
 
         .alert {
@@ -768,7 +776,7 @@
                 gap: 1rem;
             }
 
-            .evidence-content {
+            .evidence-modal-content {
                 width: 95%;
                 margin: 10% auto;
             }
@@ -938,7 +946,7 @@
             <div style="margin-bottom: 2rem;">
                 <button class="btn" onclick="exportResults()" id="export-btn" disabled>Export to CSV</button>
                 <button class="btn btn-secondary" onclick="generateAllSummaries()" id="summaries-btn" disabled>Generate AI Summaries</button>
-                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Run analysis to enable export</span>
+                <span style="margin-left: 1rem; color: #6c757d; font-size: 0.9rem;" id="export-status">Analysis complete - ready to export</span>
             </div>
 
             <div class="results-container">
@@ -1120,7 +1128,7 @@
 
     <!-- NEW: Evidence Modal -->
     <div id="evidence-modal" class="evidence-modal">
-        <div class="evidence-content">
+        <div class="evidence-modal-content">
             <div class="evidence-header">
                 <h3 id="evidence-title">Evidence Details</h3>
                 <button class="close-evidence" onclick="closeEvidence()">&times;</button>
@@ -1843,4 +1851,4 @@
                     console.log(`Processing file ${i + 1}/${files.length}: ${file.name}`)
                     processingDetails.innerHTML = `Processing ${file.name} (${i + 1}/${files.length})...`
                     
-                    // Validate
+                    // Validate file size
