@@ -849,8 +849,7 @@
             <button class="tab-btn active" onclick="showTab('results')">Expected Output</button>
             <button class="tab-btn" onclick="showTab('setup')">Setup & Config</button>
             <button class="tab-btn" onclick="showTab('codes')">Coding Schemes</button>
-            <button class="tab-btn" onclick="showTab('upload')">Upload Articles</button>
-            <button class="tab-btn" onclick="showTab('analysis')">Run Analysis</button>
+            <button class="tab-btn" onclick="showTab('upload')">Upload & Analyze</button>
         </nav>
 
         <!-- Results Tab -->
@@ -992,10 +991,18 @@
             </div>
         </div>
 
-        <!-- Upload Tab -->
+        <!-- Upload & Analyze Tab -->
         <div id="upload" class="tab-content hidden">
-            <h2>Upload Articles</h2>
-            <p>Upload PDF articles for analysis. Files are saved to your account for reuse across analyses.</p>
+            <h2>Upload & Analyze Articles</h2>
+            <p>Upload PDF articles and analyze them individually. Files are saved to your account for reuse across analyses.</p>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="enable-reliability" checked />
+                    Enable Multi-Model Reliability Check (Premium only)
+                </label>
+                <p style="color: #6c757d; font-size: 0.9rem;">Compare results across different AI models for validation</p>
+            </div>
 
             <div id="processing-indicator" class="processing-indicator hidden">
                 <strong>Processing files...</strong>
@@ -1011,32 +1018,6 @@
 
             <div id="file-list" style="margin-top: 2rem;">
                 <!-- Uploaded files will be listed here -->
-            </div>
-        </div>
-
-        <!-- Analysis Tab -->
-        <div id="analysis" class="tab-content hidden">
-            <h2>Run Analysis</h2>
-            <p>Execute real AI analysis across your uploaded articles using your configured models.</p>
-
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="enable-reliability" checked />
-                    Enable Multi-Model Reliability Check (Premium only)
-                </label>
-                <p style="color: #6c757d; font-size: 0.9rem;">Compare results across different AI models for validation</p>
-            </div>
-
-            <button class="btn" onclick="startAnalysis()" id="start-analysis-btn">
-                Start AI Analysis
-            </button>
-
-            <div id="analysis-progress" class="hidden">
-                <h3>Analysis Progress</h3>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill"></div>
-                </div>
-                <p id="progress-text">Initializing...</p>
             </div>
         </div>
     </div>
@@ -1719,9 +1700,13 @@
 
         function handleFileSelect(e) {
             const files = Array.from(e.target.files)
+            console.log('Files selected:', files.length)
+            
             if (files.length === 0) return
             
             const pdfFiles = files.filter(file => file.type === 'application/pdf')
+            console.log('PDF files:', pdfFiles.length)
+            
             if (pdfFiles.length === 0) {
                 showAlert('Please select PDF files only', 'warning')
                 return
