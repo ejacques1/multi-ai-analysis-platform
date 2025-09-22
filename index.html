@@ -2046,11 +2046,7 @@
                             const result = analysisResults.find(r => r.fileId === file.id)
                             if (result && result.codesFound && result.codesFound[code.name] !== undefined) {
                                 const value = result.codesFound[code.name]
-                                if (value === 1) {
-    bodyHTML += `<td class="code-cell" style="cursor: pointer;" onclick="toggleEvidence('${file.id}', '${code.name}')">${value}</td>`
-} else {
-    bodyHTML += `<td class="code-cell">${value}</td>`
-}
+                                bodyHTML += `<td class="code-cell">${value}</td>`
                             } else {
                                 bodyHTML += '<td class="code-cell">?</td>'
                             }
@@ -2059,10 +2055,6 @@
                     
                     bodyHTML += '</tr>'
                 })
-                function toggleEvidence(fileId, codeName) {
-    console.log('Clicked evidence for file:', fileId, 'code:', codeName)
-    // We'll add the actual evidence display in the next step
-}
             }
             
             tableBody.innerHTML = bodyHTML
